@@ -1,12 +1,16 @@
 import os
 from pathlib import Path
+from typing import List
 
 import cdsapi
+import xarray as xr
 
 from src.datasources import codab
 
 DATA_DIR = Path(os.environ["AA_DATA_DIR_NEW"])
 ERA5_RAW_DIR = DATA_DIR / "public" / "raw" / "tcd" / "era5"
+ERA5_RAW_HOURLY_DIR = ERA5_RAW_DIR / "hourly"
+ERA5_PROC_DIR = DATA_DIR / "public" / "processed" / "tcd" / "era5"
 
 
 def download_era5_monthly():
@@ -37,79 +41,138 @@ def download_era5_monthly():
     )
 
 
-def download_era5_hourly(year: int = 2023):
+def download_era5_hourly(years: List[int], clobber: bool = False):
     adm2 = codab.load_codab()
     bounds = adm2.total_bounds
     area = [bounds[3] + 1, bounds[0], bounds[1], bounds[2] + 1]
     client = cdsapi.Client()
     fileformat = "grib"
-    data_request = {
-        "product_type": "ensemble_mean",
-        "format": fileformat,
-        "variable": "total_precipitation",
-        "year": f"{year}",
-        "month": [
-            "01",
-            "02",
-            "03",
-            "04",
-            "05",
-            "06",
-            "07",
-            "08",
-            "09",
-            "10",
-            "11",
-            "12",
-        ],
-        "day": [
-            "01",
-            "02",
-            "03",
-            "04",
-            "05",
-            "06",
-            "07",
-            "08",
-            "09",
-            "10",
-            "11",
-            "12",
-            "13",
-            "14",
-            "15",
-            "16",
-            "17",
-            "18",
-            "19",
-            "20",
-            "21",
-            "22",
-            "23",
-            "24",
-            "25",
-            "26",
-            "27",
-            "28",
-            "29",
-            "30",
-            "31",
-        ],
-        "time": [
-            "00:00",
-            "03:00",
-            "06:00",
-            "09:00",
-            "12:00",
-            "15:00",
-            "18:00",
-            "21:00",
-        ],
-        "area": area,
-    }
-    filename = f"ecmwf-reanalysis-hourly-precipitation.{fileformat}"
-    client.retrieve(
-        "reanalysis-era5-single-levels",
-        data_request,
+    for year in years:
+        data_request = {
+            "product_type": "ensemble_mean",
+            "format": fileformat,
+            "variable": "total_precipitation",
+            "year": f"{year}",
+            "month": [
+                "01",
+                "02",
+                "03",
+                "04",
+                "05",
+                "06",
+                "07",
+                "08",
+                "09",
+                "10",
+                "11",
+                "12",
+            ],
+            "day": [
+                "01",
+                "02",
+                "03",
+                "04",
+                "05",
+                "06",
+                "07",
+                "08",
+                "09",
+                "10",
+                "11",
+                "12",
+                "13",
+                "14",
+                "15",
+                "16",
+                "17",
+                "18",
+                "19",
+                "20",
+                "21",
+                "22",
+                "23",
+                "24",
+                "25",
+                "26",
+                "27",
+                "28",
+                "29",
+                "30",
+                "31",
+            ],
+            "time": [
+                "00:00",
+                "03:00",
+                "06:00",
+                "09:00",
+                "12:00",
+                "15:00",
+                "18:00",
+                "21:00",
+            ],
+            "area": area,
+        }
+        filename = f"ecmwf-reanalysis-hourly-precipitation-{year}.{fileformat}"
+        save_path = ERA5_RAW_HOURLY_DIR / filename
+        if clobber or not save_path.exists():
+            client.retrieve(
+                "reanalysis-era5-single-levels",
+                data_request,
+                save_path,
+            )
+        else:
+            print(f"File {save_path} already exists.")
+
+
+def load_era5_hourly(year: int = 2023) -> xr.DataArray:
+    filename = f"ecmwf-reanalysis-hourly-precipitation-{year}.grib"
+    ds = xr.load_dataset(ERA5_RAW_HOURLY_DIR / filename, engine="cfgrib")
+    da = ds["tp"]
+    return da
+
+
+def load_era5_monthly() -> xr.DataArray:
+    filename = "ecmwf-reanalysis-monthly-precipitation.grib"
+    ds = xr.load_dataset(
         ERA5_RAW_DIR / filename,
+        engine="cfgrib",
+        backend_kwargs={"indexpath": ""},
     )
+    da = ds["tp"]
+    return da
+
+
+def process_combine_era5_hourly():
+    """
+    Combine all ERA5 hourly files into a single file.
+    """
+    files = list(
+        ERA5_RAW_HOURLY_DIR.glob(
+            "ecmwf-reanalysis-hourly-precipitation-*.grib"
+        )
+    )
+    das = []
+    for file in files:
+        ds = xr.load_dataset(
+            file, engine="cfgrib", backend_kwargs={"indexpath": ""}
+        )
+        da_in = ds["tp"]
+        das.append(da_in)
+
+    ds_out = xr.merge(das)
+    ds_out.to_netcdf(
+        ERA5_PROC_DIR / "ecmwf-reanalysis-hourly-precipitation-combined.nc"
+    )
+
+
+def load_combined_era5_hourly() -> xr.DataArray:
+    return xr.load_dataset(
+        ERA5_PROC_DIR / "ecmwf-reanalysis-hourly-precipitation-combined.nc"
+    )["tp"]
+
+
+def process_era5_hourly_to_daily():
+    hourly_combined = xr.load_dataset(
+        ERA5_PROC_DIR / "ecmwf-reanalysis-hourly-precipitation-combined.nc"
+    )["tp"]
+    hourly_combined["valid_time_m1"] = hourly_combined["valid_time"] - 1
