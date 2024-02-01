@@ -3,8 +3,11 @@ from pathlib import Path
 from typing import List
 
 import cdsapi
+import pandas as pd
 import xarray as xr
+from tqdm import tqdm
 
+from src import utils
 from src.datasources import codab
 
 DATA_DIR = Path(os.environ["AA_DATA_DIR_NEW"])
@@ -152,7 +155,7 @@ def process_combine_era5_hourly():
         )
     )
     das = []
-    for file in files:
+    for file in tqdm(files):
         ds = xr.load_dataset(
             file, engine="cfgrib", backend_kwargs={"indexpath": ""}
         )
@@ -172,7 +175,37 @@ def load_combined_era5_hourly() -> xr.DataArray:
 
 
 def process_era5_hourly_to_daily():
-    hourly_combined = xr.load_dataset(
-        ERA5_PROC_DIR / "ecmwf-reanalysis-hourly-precipitation-combined.nc"
-    )["tp"]
+    hourly_combined = load_combined_era5_hourly()
     hourly_combined["valid_time_m1"] = hourly_combined["valid_time"] - 1
+    daily = (
+        hourly_combined.groupby("valid_time_m1.date")
+        .sum()
+        .isel(date=slice(1, -1))
+    )
+    daily["date"] = pd.to_datetime(daily["date"])
+    daily.to_netcdf(ERA5_PROC_DIR / "ecmwf-reanalysis-daily-precipitation.nc")
+
+
+def load_era5_daily() -> xr.DataArray:
+    da = xr.load_dataset(
+        ERA5_PROC_DIR / "ecmwf-reanalysis-daily-precipitation.nc"
+    )["tp"]
+    da = da.rio.write_crs("EPSG:4326")
+    return da
+
+
+def calculate_daily_rasterstats():
+    daily = load_era5_daily()
+    adm2 = codab.load_codab()
+    daily_up = utils.upsample_dataarray(daily)
+    raster_stats = daily_up.oap.compute_raster_stats(
+        gdf=adm2, feature_col="ADM2_PCODE"
+    )
+    raster_stats = raster_stats.drop(columns=["number", "surface"])
+    filename = "era5-daily-tcd-adm2-rasterstats.parquet"
+    raster_stats.to_parquet(ERA5_PROC_DIR / filename, index=False)
+
+
+def load_era5_daily_rasterstats() -> pd.DataFrame:
+    filename = "era5-daily-tcd-adm2-rasterstats.parquet"
+    return pd.read_parquet(ERA5_PROC_DIR / filename)
