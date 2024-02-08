@@ -10,6 +10,7 @@ IPC_BASE_URL = "https://api.ipcinfo.org"
 
 DATA_DIR = Path(os.environ["AA_DATA_DIR_NEW"])
 IPC_RAW_DIR = DATA_DIR / "public" / "raw" / "tcd" / "ipc"
+IPC_PROC_DIR = DATA_DIR / "public" / "processed" / "tcd" / "ipc"
 
 
 def download_adm0_ipc_analyses(
@@ -105,3 +106,16 @@ def load_adm0_ipc_analyses():
 def load_subnational_ipc_analyses():
     filename = "TD_subnational_ipc_analyses.csv"
     return pd.read_csv(IPC_RAW_DIR / filename)
+
+
+def process_tcd_hdx_ipc():
+    filename = "cadre_harmonise_caf_ipc.xlsx"
+    df = pd.read_excel(IPC_RAW_DIR / filename)
+    dff = df[df["adm0_pcod3"] == "TCD"]
+    save_filename = "TCD_cadre_harmonise_ipc.csv"
+    dff.to_csv(IPC_PROC_DIR / save_filename, index=False)
+
+
+def load_tcd_hdx_ipc():
+    filename = "TCD_cadre_harmonise_ipc.csv"
+    return pd.read_csv(IPC_PROC_DIR / filename)

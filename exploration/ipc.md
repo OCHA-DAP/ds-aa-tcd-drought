@@ -13,7 +13,7 @@ jupyter:
     name: ds-aa-tcd-drought
 ---
 
-# IPC
+# IPC from IPC API
 
 ```python
 %load_ext jupyter_black
@@ -38,7 +38,7 @@ adm2_aoi = adm2[adm2["ADM1_PCODE"].isin(constants.ADM1_AOI_PCODES)]
 ```
 
 ```python
-ipc.download_subnational_ipc_analyses()
+# ipc.download_subnational_ipc_analyses()
 ```
 
 ```python
@@ -55,7 +55,7 @@ df["top_current_period_dates"].unique()
 ```
 
 ```python
-def ipc_current_daterate_to_date(date_range: str):
+def ipc_current_daterange_to_date(date_range: str):
     # Step 1: Extract the start month and year
     start_month_year = date_range.split("-")[0].strip()
 
@@ -69,7 +69,7 @@ def ipc_current_daterate_to_date(date_range: str):
 
 ```python
 df["top_current_startdate"] = df["top_current_period_dates"].apply(
-    ipc_current_daterate_to_date
+    ipc_current_daterange_to_date
 )
 ```
 
