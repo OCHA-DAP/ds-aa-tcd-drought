@@ -42,7 +42,7 @@ df = ipc.load_tcd_hdx_ipc()
 df = df[
     (df["adm2_pcod2"].notnull())
     & (df["adm3_pcod2"].isnull())
-    & (df["adm1_pcod2"].isin(constants.ADM1_AOI_PCODES))
+    # & (df["adm1_pcod2"].isin(constants.ADM1_AOI_PCODES))
 ]
 cols = [
     "adm0_name",
@@ -83,6 +83,11 @@ df
 ```
 
 ```python
+cols = ["exercise_year", "exercise_label", "reference_label"]
+df.groupby(cols).first().reset_index()[cols]
+```
+
+```python
 # find analysis to match fw sorting
 cols = [
     "adm1_name",
@@ -108,8 +113,8 @@ df_agg = df[
 ].set_index(["adm1_name", "adm2_name"])
 df_agg["weighted_3_4"] = df_agg["frac_phase3"] + df_agg["frac_phase4"] * 10
 df_agg["norm_weighted_3_4"] = (
-    df_agg["weighted_3_4"] / df_agg["weighted_3_4"].max()
-)
+    df_agg["weighted_3_4"] - df_agg["weighted_3_4"].min()
+) / (df_agg["weighted_3_4"].max() - df_agg["weighted_3_4"].min())
 df_agg = df_agg.sort_values("norm_weighted_3_4", ascending=False)
 cols = ["norm_weighted_3_4", "frac_phase35", "phase35"]
 fw_current = (
@@ -132,8 +137,8 @@ df_agg = df[
 ].set_index(["adm1_name", "adm2_name"])
 df_agg["weighted_3_4"] = df_agg["frac_phase3"] + df_agg["frac_phase4"] * 10
 df_agg["norm_weighted_3_4"] = (
-    df_agg["weighted_3_4"] / df_agg["weighted_3_4"].max()
-)
+    df_agg["weighted_3_4"] - df_agg["weighted_3_4"].min()
+) / (df_agg["weighted_3_4"].max() - df_agg["weighted_3_4"].min())
 df_agg = df_agg.sort_values("norm_weighted_3_4", ascending=False)
 cols = ["norm_weighted_3_4", "frac_phase35", "phase35"]
 updated_current = (
@@ -160,8 +165,8 @@ dff = df[
 df_agg = dff.groupby(["adm1_name", "adm2_name"]).mean(numeric_only=True)
 df_agg["weighted_3_4"] = df_agg["frac_phase3"] + df_agg["frac_phase4"] * 10
 df_agg["norm_weighted_3_4"] = (
-    df_agg["weighted_3_4"] / df_agg["weighted_3_4"].max()
-)
+    df_agg["weighted_3_4"] - df_agg["weighted_3_4"].min()
+) / (df_agg["weighted_3_4"].max() - df_agg["weighted_3_4"].min())
 df_agg = df_agg.sort_values("norm_weighted_3_4", ascending=False)
 cols = ["norm_weighted_3_4", "frac_phase35", "phase35"]
 fw_historical = (
@@ -188,8 +193,8 @@ dff = df[
 df_agg = dff.groupby(["adm1_name", "adm2_name"]).mean(numeric_only=True)
 df_agg["weighted_3_4"] = df_agg["frac_phase3"] + df_agg["frac_phase4"] * 10
 df_agg["norm_weighted_3_4"] = (
-    df_agg["weighted_3_4"] / df_agg["weighted_3_4"].max()
-)
+    df_agg["weighted_3_4"] - df_agg["weighted_3_4"].min()
+) / (df_agg["weighted_3_4"].max() - df_agg["weighted_3_4"].min())
 df_agg = df_agg.sort_values("norm_weighted_3_4", ascending=False)
 cols = ["norm_weighted_3_4", "frac_phase35", "phase35"]
 fw_historical_allyears = (
@@ -216,8 +221,8 @@ dff = df[
 df_agg = dff.groupby(["adm1_name", "adm2_name"]).mean(numeric_only=True)
 df_agg["weighted_3_4"] = df_agg["frac_phase3"] + df_agg["frac_phase4"] * 10
 df_agg["norm_weighted_3_4"] = (
-    df_agg["weighted_3_4"] / df_agg["weighted_3_4"].max()
-)
+    df_agg["weighted_3_4"] - df_agg["weighted_3_4"].min()
+) / (df_agg["weighted_3_4"].max() - df_agg["weighted_3_4"].min())
 df_agg = df_agg.sort_values("norm_weighted_3_4", ascending=False)
 cols = ["norm_weighted_3_4", "frac_phase35", "phase35"]
 updated_historical = (
@@ -264,6 +269,10 @@ combined_results[cols].reset_index().to_csv(
 ```
 
 ```python
+combined_results[cols].reset_index()
+```
+
+```python
 combined_results[[col for col in combined_results.columns if "update_" in col]]
 ```
 
@@ -304,10 +313,14 @@ for reference_label, exercise_label in zip(reference_labels, exercise_labels):
         axs[j].legend(title="Department", loc="lower left")
 
     fig.suptitle(
-        f"Chad IPC phase by province and department
-        (exercise {exercise_label}, projected for {reference_label})",
+        "Chad IPC phase by province and department "
+        f"(exercise {exercise_label}, projected for {reference_label})",
         fontsize=16,
     )
     plt.tight_layout()
     plt.show()
+```
+
+```python
+
 ```

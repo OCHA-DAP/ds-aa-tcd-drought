@@ -119,3 +119,7 @@ def process_tcd_hdx_ipc():
 def load_tcd_hdx_ipc():
     filename = "TCD_cadre_harmonise_ipc.csv"
     return pd.read_csv(IPC_PROC_DIR / filename)
+
+
+def process_tcd_hdx_ipc_for_fw(aoi_only: bool = True):
+    pass
