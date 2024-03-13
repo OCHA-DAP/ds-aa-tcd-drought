@@ -209,3 +209,49 @@ def calculate_daily_rasterstats():
 def load_era5_daily_rasterstats() -> pd.DataFrame:
     filename = "era5-daily-tcd-adm2-rasterstats.parquet"
     return pd.read_parquet(ERA5_PROC_DIR / filename)
+
+
+def calculate_dry_spells(
+    dry_mean_thresh_mm: int = 2, dry_len_thresh: int = 14
+):
+    df = load_era5_daily_rasterstats()
+    df_season = df[df["date"].dt.month.isin([7, 8, 9])]
+
+    dfs = []
+    for adm2_code, adm2_group in tqdm(df_season.groupby("ADM2_PCODE")):
+        for year, group in adm2_group.groupby(adm2_group["date"].dt.year):
+            running_count = 0
+            consecutive = []
+            for _, row in group.iterrows():
+                if row["mean"] <= dry_mean_thresh_mm / 1000:
+                    running_count += 1
+                else:
+                    running_count = 0
+                consecutive.append(running_count)
+            group["consecutive_days"] = consecutive
+            consec_count = (
+                group["consecutive_days"]
+                .value_counts()
+                .to_frame()
+                .reset_index()
+            )
+            consec_count["year"] = year
+            consec_count["ADM2_PCODE"] = adm2_code
+            consec_count["mean_lte_thresh_mm"] = dry_mean_thresh_mm
+            dfs.append(consec_count)
+
+    dry_spells = pd.concat(dfs, ignore_index=True)
+    long_dry_spells = dry_spells[
+        dry_spells["consecutive_days"] == dry_len_thresh
+    ]
+    filename = (
+        f"tcd_adm2_dryspells_{dry_mean_thresh_mm}mm_{dry_len_thresh}days.csv"
+    )
+    long_dry_spells.to_csv(ERA5_PROC_DIR / filename, index=False)
+
+
+def load_dry_spells(dry_mean_thresh_mm=2, dry_len_thresh=14) -> pd.DataFrame:
+    filename = (
+        f"tcd_adm2_dryspells_{dry_mean_thresh_mm}mm_{dry_len_thresh}days.csv"
+    )
+    return pd.read_csv(ERA5_PROC_DIR / filename)
