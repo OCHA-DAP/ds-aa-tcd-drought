@@ -124,6 +124,15 @@ df_dry["ADM2_PCODE"].nunique()
 ```
 
 ```python
+filename = "tcd_era5_monthly_jas_adm2_mean.csv"
+df_monthly = pd.read_csv(era5.ERA5_PROC_DIR / filename)
+```
+
+```python
+df_monthly
+```
+
+```python
 dicts = []
 for adm2_pcode in df_ipc["ADM2_PCODE"].unique():
     df_dry_adm2 = (
@@ -137,6 +146,7 @@ for adm2_pcode in df_ipc["ADM2_PCODE"].unique():
     df_ipc_adm2 = df_ipc[df_ipc["ADM2_PCODE"] == adm2_pcode][
         ["exercise_year", "frac_phase35"]
     ]
+    df_monthly_adm2 = df_monthly[df_monthly["ADM2_PCODE"] == adm2_pcode]
     df_adm2 = (
         df_ipc_adm2.merge(
             df_dry_adm2[["count", "year"]],
@@ -148,36 +158,72 @@ for adm2_pcode in df_ipc["ADM2_PCODE"].unique():
         .fillna(0)
     )
     df_adm2["count"] = df_adm2["count"].astype(int)
+
+    df_adm2 = df_adm2.merge(
+        df_monthly_adm2[["tp", "year"]],
+        left_on="exercise_year",
+        right_on="year",
+    ).drop(columns=["year"])
     print(df_adm2)
-    corr = df_adm2["count"].corr(df_adm2["frac_phase35"])
-    dicts.append({"ADM2_PCODE": adm2_pcode, "corr": corr})
+    dry_corr = df_adm2["count"].corr(df_adm2["frac_phase35"])
+    monthly_corr = df_adm2["tp"].corr(df_adm2["frac_phase35"])
+    dicts.append(
+        {
+            "ADM2_PCODE": adm2_pcode,
+            "dry_corr": dry_corr,
+            "monthly_corr": monthly_corr,
+        }
+    )
 ```
 
 ```python
 df_corr = pd.DataFrame(dicts)
-```
-
-```python
-# df_corr = df_corr.fillna(0.0)
-```
-
-```python
-corr_plot
-```
-
-```python
-years
-```
-
-```python
 corr_plot = adm2_aoi.merge(df_corr, on="ADM2_PCODE")
+```
 
+```python
 fig, ax = plt.subplots(figsize=(12, 6))
-corr_plot[~corr_plot["corr"].isna()].plot(
-    column="corr", legend=True, ax=ax, cmap="PuOr", vmin=-0.7, vmax=0.7
+corr_plot[~corr_plot["dry_corr"].isna()].plot(
+    column="dry_corr", legend=True, ax=ax, cmap="Purples", vmin=0
 )
-corr_plot[corr_plot["corr"].isna()].plot(ax=ax, hatch="///", facecolor="white")
+corr_plot[corr_plot["dry_corr"].isna()].plot(
+    ax=ax, hatch="//", facecolor="white", edgecolor="grey"
+)
 adm2_aoi.boundary.plot(linewidth=0.5, color="k", ax=ax)
+adm2_aoi.apply(
+    lambda x: ax.annotate(
+        text=x["ADM2_FR"],
+        xy=x.geometry.centroid.coords[0],
+        ha="center",
+        va="center",
+        fontsize=8,
+    ),
+    axis=1,
+)
+ax.axis("off")
+ax.set_title(
+    "Corrélation entre compte de séquences sèches et "
+    "frac. de population phase CH 3+ (depuis 2015)"
+)
+```
+
+```python
+fig, ax = plt.subplots(figsize=(12, 6))
+corr_plot.plot(
+    column="monthly_corr", legend=True, ax=ax, cmap="Purples_r", vmax=0
+)
+
+adm2_aoi.boundary.plot(linewidth=0.5, color="k", ax=ax)
+adm2_aoi.apply(
+    lambda x: ax.annotate(
+        text=x["ADM2_FR"],
+        xy=x.geometry.centroid.coords[0],
+        ha="center",
+        va="center",
+        fontsize=8,
+    ),
+    axis=1,
+)
 ax.axis("off")
 ax.set_title(
     "Corrélation entre compte de séquences sèches et "
