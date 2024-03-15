@@ -26,7 +26,13 @@ from ochanticipy import create_custom_country_config, CodAB, ChirpsMonthly
 ```
 
 ```python
-country_config = create_custom_country_config("../aaa.yaml")
+import os
+
+os.listdir("..")
+```
+
+```python
+country_config = create_custom_country_config("../aaa.yml")
 ```
 
 ```python
