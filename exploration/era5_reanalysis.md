@@ -68,7 +68,7 @@ adm2_aoi["ADM2_PCODE"].nunique()
 ```
 
 ```python
-era5.calculate_dry_spells()
+# era5.calculate_dry_spells()
 ```
 
 ```python

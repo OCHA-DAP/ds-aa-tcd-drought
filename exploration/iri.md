@@ -171,7 +171,6 @@ ax.set_title(
     f"publié: {date_str}, délai: {L} mois"
 )
 ax.axis("off")
-ax.set_xlim(right=2)
 ```
 
 ```python
