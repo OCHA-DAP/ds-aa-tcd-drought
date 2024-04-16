@@ -96,3 +96,7 @@ PROC_BIO_DIR = (
 filename = "tcd_adm2_yeardekad_biomasse.csv"
 df_final.to_csv(PROC_BIO_DIR / filename, index=False)
 ```
+
+```python
+df_final
+```

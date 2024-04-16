@@ -61,11 +61,11 @@ date_str
 ```
 
 ```python
-ds.isel(F=-1, L=-1, C=0)["prob"].plot()
+ds.isel(F=-1, L=2, C=0)["prob"].plot()
 ```
 
 ```python
-da = ds.isel(F=-1, L=-1, C=0)["prob"]
+da = ds.isel(F=-1, L=2, C=0)["prob"]
 da = da.rio.write_crs(4326)
 ```
 
@@ -112,11 +112,15 @@ ax.set_title(
 ```
 
 ```python
-da_aoi_up_aoi.quantile(0.8)
-```
-
-```python
-da_aoi_up_aoi.max()
+per_80 = float(da_aoi_up_aoi.quantile(0.8))
+max_overall = float(da_aoi_up_aoi.max())
+frac_above_thresh = float(
+    da_aoi_up_aoi.where(da_aoi_up_aoi >= 42.5).count()
+    / da_aoi_up_aoi.where(da_aoi_up_aoi >= 0).count()
+)
+print(f"80th percentile: {per_80}")
+print(f"max: {max_overall}")
+print(f"frac above thresh: {frac_above_thresh}")
 ```
 
 ```python

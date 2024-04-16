@@ -8,9 +8,9 @@ jupyter:
       format_version: '1.3'
       jupytext_version: 1.16.1
   kernelspec:
-    display_name: ds-aa-tcd-drought
+    display_name: ds-aa-hti-hurricanes-39
     language: python
-    name: ds-aa-tcd-drought
+    name: ds-aa-hti-hurricanes-39
 ---
 
 # ERA5 hourly reanalysis processing
