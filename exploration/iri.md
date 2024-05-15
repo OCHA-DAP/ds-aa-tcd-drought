@@ -65,7 +65,7 @@ ds.isel(F=-1, L=2, C=0)["prob"].plot()
 ```
 
 ```python
-da = ds.isel(F=-1, L=2, C=0)["prob"]
+da = ds.isel(F=-1, L=1, C=0)["prob"]
 da = da.rio.write_crs(4326)
 ```
 
