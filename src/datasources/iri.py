@@ -37,8 +37,10 @@ def download_iri():
     filepath = IRI_RAW_DIR / "iri.nc"
     with open(filepath, "wb") as out_file:
         out_file.write(response.content)
-    pass
 
 
 def load_raw_iri():
-    return xr.open_dataset(IRI_RAW_DIR / "iri.nc", decode_times=False)
+    ds = xr.open_dataset(IRI_RAW_DIR / "iri.nc", decode_times=False)
+    ds["F"].attrs["calendar"] = "360_day"
+    ds = xr.decode_cf(ds)
+    return ds

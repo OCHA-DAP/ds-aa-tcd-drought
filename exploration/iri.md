@@ -61,11 +61,11 @@ date_str
 ```
 
 ```python
-ds.isel(F=-1, L=2, C=0)["prob"].plot()
+ds.isel(F=-1, L=0, C=0)["prob"].plot()
 ```
 
 ```python
-da = ds.isel(F=-1, L=1, C=0)["prob"]
+da = ds.isel(F=-1, L=0, C=0)["prob"]
 da = da.rio.write_crs(4326)
 ```
 
@@ -118,9 +118,9 @@ frac_above_thresh = float(
     da_aoi_up_aoi.where(da_aoi_up_aoi >= 42.5).count()
     / da_aoi_up_aoi.where(da_aoi_up_aoi >= 0).count()
 )
-print(f"80th percentile: {per_80}")
-print(f"max: {max_overall}")
-print(f"frac above thresh: {frac_above_thresh}")
+print(f"80th percentile: {per_80:.1f}")
+print(f"max: {max_overall:.1f}")
+print(f"frac above thresh: {frac_above_thresh:.1f}")
 ```
 
 ```python
@@ -131,7 +131,7 @@ adm2_aoi_bfa.plot()
 ```
 
 ```python
-da_bfa = ds.isel(F=-1, L=-2, C=0)["prob"]
+da_bfa = ds.isel(F=-1, L=0, C=0)["prob"]
 da_bfa = da_bfa.rio.write_crs(4326)
 ```
 
@@ -171,10 +171,24 @@ fig, ax = plt.subplots(figsize=(12, 6))
 da_aoi_up_aoi_bfa.plot(ax=ax)
 adm2_aoi_bfa.boundary.plot(ax=ax, linewidth=0.5, color="white")
 ax.set_title(
-    f"Probabilité de précipitations JJA inférieures à la moyenne, "
+    f"Probabilité de précipitations ASO inférieures à la moyenne, "
     f"publié: {date_str}, délai: {L} mois"
 )
 ax.axis("off")
+```
+
+```python
+fig.savefig("bfa-jul-2024.png")
+```
+
+```python
+import os
+
+print("Current working directory:", os.getcwd())
+```
+
+```python
+da_aoi_bfa
 ```
 
 ```python
