@@ -24,6 +24,8 @@ jupyter:
 ```python
 import matplotlib.pyplot as plt
 import pandas as pd
+import xarray as xr
+import numpy as np
 
 from src.datasources import era5, codab
 from src import constants, utils
@@ -38,7 +40,7 @@ da = da.rio.write_crs(4326)
 
 ```python
 adm2 = codab.load_codab()
-adm2_aoi = adm2[adm2["ADM1_PCODE"].isin(constants.ADM1_AOI_PCODES)]
+adm2_aoi = adm2[adm2["ADM1_PCODE"].isin(constants.NEW_ADM1_AOI_PCODES)]
 ```
 
 ```python
@@ -131,5 +133,51 @@ ax.legend().set_visible(False)
 ```
 
 ```python
+def upsample_dataarray(
+    da: xr.DataArray, resolution: float = 0.1
+) -> xr.DataArray:
+    new_lat = np.arange(
+        da.latitude.min() - 1, da.latitude.max() + 1, resolution
+    )
+    new_lon = np.arange(
+        da.longitude.min() - 1, da.longitude.max() + 1, resolution
+    )
+    return da.interp(
+        latitude=new_lat,
+        longitude=new_lon,
+        method="nearest",
+        kwargs={"fill_value": "extrapolate"},
+    )
+```
 
+```python
+da
+```
+
+```python
+da_up = upsample_dataarray(da)
+da_up_season = da_up.sel(date=da_up["date"].dt.month.isin([7, 8, 9]))
+```
+
+```python
+da.date.dt.month
+```
+
+```python
+dfs = []
+for adm2_pcode, row in adm2.set_index("ADM2_PCODE").iterrows():
+    da_clip = da_up_season.rio.clip([row.geometry], all_touched=True)
+    mean = (
+        da_clip.mean(dim=["latitude", "longitude"]).groupby("date.year").mean()
+    )
+    df_out = mean.to_dataframe()["tp"].reset_index()
+    df_out["ADM2_PCODE"] = adm2_pcode
+    dfs.append(df_out)
+
+mean_jas_adm2_df = pd.concat(dfs, ignore_index=True)
+```
+
+```python
+filename = "tcd_era5_monthly_jas_adm2_mean.csv"
+mean_jas_adm2_df.to_csv(era5.ERA5_PROC_DIR / filename, index=False)
 ```
