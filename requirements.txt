@@ -1,0 +1,10 @@
+geopandas==1.0.1
+pandas==2.2.2
+rioxarray==0.17.0
+xarray==2024.7.0
+azure-storage-blob==12.22.0
+python-dotenv==1.0.1
+sqlalchemy==2.0.36
+psycopg2-binary==2.9.10
+pyarrow==17.0.0
+dask==2024.8.0
