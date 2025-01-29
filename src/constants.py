@@ -43,3 +43,5 @@ NEW_ADM2_AOI_PCODES = [
     "TD2101",
     "TD2102",
 ]
+
+ISO3 = "TCD"

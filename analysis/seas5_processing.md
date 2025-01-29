@@ -22,7 +22,19 @@ jupyter:
 ```
 
 ```python
-from src.datasources import seas5
+from src.datasources import seas5, codab
+```
+
+```python
+codab.download_codab()
+```
+
+```python
+adm = codab.load_codab_from_blob(admin_level=1, aoi_only=True)
+```
+
+```python
+adm.plot()
 ```
 
 ```python
