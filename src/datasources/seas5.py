@@ -60,3 +60,9 @@ def process_seas5_rasters():
     df_seas5 = da_seas5_q_computed.to_dataframe("q")["q"].reset_index()
     blob_name = f"{blob_utils.PROJECT_PREFIX}/processed/seas5/seas5_original_trigger_raster_stats.parquet"  # noqa
     blob_utils.upload_parquet_to_blob(df_seas5, blob_name)
+
+
+def load_seas5_stats():
+    blob_name = f"{blob_utils.PROJECT_PREFIX}/processed/seas5/seas5_original_trigger_raster_stats.parquet"  # noqa
+    df_seas5 = blob_utils.load_parquet_from_blob(blob_name)
+    return df_seas5

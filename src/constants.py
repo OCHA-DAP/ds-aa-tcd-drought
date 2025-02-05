@@ -47,3 +47,18 @@ NEW_ADM2_AOI_PCODES = [
 ISO3 = "TCD"
 
 ORIGINAL_Q = 0.2
+
+FRENCH_MONTHS = {
+    "Jan": "jan.",
+    "Feb": "fév.",
+    "Mar": "mars",
+    "Apr": "avr.",
+    "May": "mai",
+    "Jun": "juin",
+    "Jul": "juil.",
+    "Aug": "août",
+    "Sep": "sept.",
+    "Oct": "oct.",
+    "Nov": "nov.",
+    "Dec": "déc.",
+}
