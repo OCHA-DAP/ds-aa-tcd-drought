@@ -45,3 +45,5 @@ NEW_ADM2_AOI_PCODES = [
 ]
 
 ISO3 = "TCD"
+
+ORIGINAL_Q = 0.2
