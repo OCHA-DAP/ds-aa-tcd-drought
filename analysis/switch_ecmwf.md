@@ -29,7 +29,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
 from matplotlib.ticker import LogLocator, FuncFormatter
-from dask.diagnostics import ProgressBar
 
 from src.datasources import seas5, codab, iri
 from src.utils.raster import upsample_dataarray
@@ -41,6 +40,11 @@ from src.utils.rp_calc import calculate_groups_rp
 ## SEAS5
 
 ### Loading and processing
+
+```python
+# if needed, process raster stats (takes a few minutes)
+# seas5.process_seas5_rasters()
+```
 
 ```python
 df_seas5 = seas5.load_seas5_stats()
@@ -429,4 +433,8 @@ for issued_month in df_compare["issued_month"].unique():
     ax.set_ylim((ymin, ymax))
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
+```
+
+```python
+
 ```
