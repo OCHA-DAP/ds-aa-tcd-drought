@@ -46,7 +46,9 @@ NEW_ADM2_AOI_PCODES = [
 
 ISO3 = "TCD"
 
+# original framework quantile is 20% of area
 ORIGINAL_Q = 0.2
+# original framework lower tercile prob. threshold is 42.5%
 ORIGINAL_IRI_THRESH = 42.5
 
 FRENCH_MONTHS = {

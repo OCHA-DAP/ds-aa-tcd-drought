@@ -24,7 +24,8 @@ def open_seas5_cog(issued_date_str: str, lt: int):
 
 def open_seas5_rasters(mo_lt_combos: List[dict] = None):
     if mo_lt_combos is None:
-        # set to 2022 framework combinations
+        # set to 2022 framework combinations, which are
+        # JAS valid months, from issue months March, April, May, June
         mo_lt_combos = [
             {"mo": x, "lts": [y for y in range(7 - x, 10 - x)]}
             for x in range(3, 7)
