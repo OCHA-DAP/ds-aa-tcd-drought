@@ -139,4 +139,6 @@ dmypy.json
 *.ipynb
 
 .DS_Store
+
+temp
 ```
