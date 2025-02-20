@@ -14,13 +14,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-PROD_BLOB_SAS = os.getenv("DS_AZ_BLOB_PROD_SAS")
-DEV_BLOB_SAS = os.getenv("DS_AZ_BLOB_DEV_SAS_WRITE")
+DSCI_AZ_BLOB_PROD_SAS = os.getenv("DSCI_AZ_BLOB_PROD_SAS")
+DSCI_AZ_BLOB_DEV_SAS_WRITE = os.getenv("DSCI_AZ_BLOB_DEV_SAS_WRITE")
 
-DS_AZ_BLOB_DEV_HOST = "imb0chd0dev.blob.core.windows.net"
-DS_AZ_BLOB_PROD_HOST = "imb0chd0prod.blob.core.windows.net"
+DSCI_AZ_BLOB_DEV_HOST = "imb0chd0dev.blob.core.windows.net"
+DSCI_AZ_BLOB_PROD_HOST = "imb0chd0prod.blob.core.windows.net"
 
-AZURE_BLOB_BASE_URL = "https://{host}/{container_name}?{sas}"
+DSCI_AZ_BLOB_BASE_URL = "https://{host}/{container_name}?{sas}"
 
 PROJECT_PREFIX = "ds-aa-tcd-drought"
 
@@ -44,16 +44,16 @@ def get_container_client(
         Azure storage container client object
     """
     if stage == "dev":
-        url = AZURE_BLOB_BASE_URL.format(
-            host=DS_AZ_BLOB_DEV_HOST,
+        url = DSCI_AZ_BLOB_BASE_URL.format(
+            host=DSCI_AZ_BLOB_DEV_HOST,
             container_name=container_name,
-            sas=DEV_BLOB_SAS,
+            sas=DSCI_AZ_BLOB_DEV_SAS_WRITE,
         )
     elif stage == "prod":
-        url = AZURE_BLOB_BASE_URL.format(
-            host=DS_AZ_BLOB_PROD_HOST,
+        url = DSCI_AZ_BLOB_BASE_URL.format(
+            host=DSCI_AZ_BLOB_PROD_HOST,
             container_name=container_name,
-            sas=PROD_BLOB_SAS,
+            sas=DSCI_AZ_BLOB_PROD_SAS,
         )
     else:
         raise ValueError(f"Invalid stage: {stage}")
