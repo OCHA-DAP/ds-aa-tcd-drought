@@ -15,6 +15,8 @@ jupyter:
 
 # Biomasse trend check
 
+Note: this biomasse was aggregated to the old (2022 framework) admins.
+
 ```python
 %load_ext jupyter_black
 %load_ext autoreload
@@ -32,8 +34,13 @@ from src.utils.rp_calc import calculate_one_group_rp
 ```
 
 ```python
+min_year = 2000
+```
+
+```python
 df_bm = bm.load_aggregated_biomasse_data(iso3="tcd", admin_level="ADM2")
 df_bm = df_bm[df_bm["dekad"] == 24]
+df_bm = df_bm[df_bm["year"] >= min_year]
 ```
 
 ```python

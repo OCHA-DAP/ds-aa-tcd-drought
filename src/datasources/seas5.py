@@ -64,13 +64,11 @@ def process_seas5_rasters():
 
 
 def load_seas5_stats(
-    variable: Literal["zscore", "abs"] = "abs", q: float = ORIGINAL_Q
+    variable: Literal["zscore", "abs", "rank"] = "abs", q: float = ORIGINAL_Q
 ):
-    if variable == "zscore":
-        blob_name = f"{blob_utils.PROJECT_PREFIX}/processed/seas5/seas5_zscore_q{q*100:.0f}.parquet"  # noqa
-    elif variable == "abs":
+    if variable == "abs":
         blob_name = f"{blob_utils.PROJECT_PREFIX}/processed/seas5/seas5_original_trigger_raster_stats.parquet"  # noqa
     else:
-        raise ValueError(f"Invalid variable {variable}")
+        blob_name = f"{blob_utils.PROJECT_PREFIX}/processed/seas5/seas5_{variable}_q{q*100:.0f}.parquet"  # noqa
     df_seas5 = blob_utils.load_parquet_from_blob(blob_name)
     return df_seas5

@@ -23,6 +23,7 @@ jupyter:
 
 ```python
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 import statsmodels.api as sm
 import numpy as np
 
@@ -37,26 +38,28 @@ NEW_ADM1_AOI_PCODES
 ```
 
 ```python
-bm.download_dmp(admin_level="ADM1")
+# bm.download_dmp(admin_level="ADM1")
 ```
 
 ```python
-dmp = bm.calculate_biomasse(admin_level="ADM1")
+# dmp = bm.calculate_biomasse(admin_level="ADM1")
 ```
 
 ```python
-[x in dmp["admin1Pcod"].unique() for x in NEW_ADM1_AOI_PCODES]
+# [x in dmp["admin1Pcod"].unique() for x in NEW_ADM1_AOI_PCODES]
 ```
 
 ```python
-bm.aggregate_biomasse(
-    admin_pcodes=NEW_ADM1_AOI_PCODES, iso3="tcd", admin_level="ADM1"
-)
+# bm.aggregate_biomasse(
+#     admin_pcodes=NEW_ADM1_AOI_PCODES, iso3="tcd", admin_level="ADM1"
+# )
 ```
 
 ```python
+min_year = 1999
 df_bm = bm.load_aggregated_biomasse_data(iso3="tcd", admin_level="ADM1")
 df_bm = df_bm[df_bm["dekad"] == 24]
+df_bm = df_bm[df_bm["year"] >= min_year]
 ```
 
 ```python
@@ -80,7 +83,84 @@ df_bm
 ```
 
 ```python
-df_bm.set_index("year")[["biomasse", "biomasse_linearfit"]].plot()
+fig, ax = plt.subplots(dpi=200)
+
+df_bm.set_index("year")["biomasse"].plot(
+    ax=ax, color="forestgreen", linestyle="-"
+)
+df_bm.set_index("year")["biomasse_linearfit"].plot(
+    ax=ax, color="grey", linestyle="--", linewidth=1
+)
+
+ax.legend(["Biomasse", "Ajustement linéaire"])
+
+ax.set_xlim(df_bm["year"].min(), df_bm["year"].max())
+
+ax.set_xlabel("Année")
+ax.set_ylabel("Mesure de biomasse absolu")
+
+ax.set_title("Tendance de biomasse")
+
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
+```
+
+```python
+# Fit the OLS model
+X = sm.add_constant(df_bm["year"])  # Add constant for the intercept
+y = df_bm["biomasse"]
+
+model = sm.OLS(y, X).fit()
+
+# Get the predicted values and the confidence intervals
+predictions = model.predict(X)
+
+# Get the confidence intervals for the predictions
+predictions_ci = model.get_prediction(X).conf_int(
+    alpha=0.05
+)  # 95% confidence interval
+
+# Extract the lower and upper bounds of the confidence interval
+lower_bound = predictions_ci[:, 0]  # Lower bound
+upper_bound = predictions_ci[:, 1]  # Upper bound
+
+# Plot
+fig, ax = plt.subplots(dpi=200, figsize=(8, 5))
+
+# Plot the biomasse data
+df_bm.set_index("year")["biomasse"].plot(
+    ax=ax, color="darkgreen", linestyle="-"
+)
+
+# Plot the linear fit
+df_bm.set_index("year")["biomasse_linearfit"].plot(
+    ax=ax, color="grey", linestyle="--", linewidth=1
+)
+
+# Plot the confidence interval as a shaded area
+ax.fill_between(
+    df_bm["year"],
+    lower_bound,
+    upper_bound,
+    facecolor="grey",
+    alpha=0.1,
+    label="Intervalle de confiance 95%",
+)
+
+ax.legend(["Biomasse", "Ajustement linéaire", "Intervalle de confiance 95%"])
+
+ax.set_xlim(df_bm["year"].min(), df_bm["year"].max())
+
+ax.set_xlabel("Année")
+ax.set_ylabel("Mesure de biomasse absolu")
+
+formatter = FuncFormatter(lambda x, _: f"{int(x):,}")
+ax.yaxis.set_major_formatter(formatter)
+
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
+
+ax.set_title("Tendance de biomasse")
 ```
 
 ```python
@@ -103,6 +183,11 @@ for x in ["", "_linearfit"]:
 
 ```python
 df_bm
+```
+
+```python
+blob_name = f"{blob_utils.PROJECT_PREFIX}/processed/biomasse_d24_2025.parquet"
+blob_utils.upload_parquet_to_blob(df_bm, blob_name)
 ```
 
 ```python
@@ -134,6 +219,10 @@ df_bm.sort_values("biomasse_linearfit_anomaly")
 ```
 
 ```python
+df_bm.sort_values("biomasse_anomaly")
+```
+
+```python
 fixed_rp = 5
 raw_thresh = df_bm["biomasse_anomaly"].quantile(1 / fixed_rp)
 trend_thresh = df_bm["biomasse_linearfit_anomaly"].quantile(1 / fixed_rp)
@@ -144,7 +233,7 @@ raw_thresh, trend_thresh
 ```
 
 ```python
-fig, ax = plt.subplots(dpi=200, figsize=(8, 8))
+fig, ax = plt.subplots(dpi=200, figsize=(6, 6))
 
 raw_color = "royalblue"
 trend_color = "crimson"
@@ -189,10 +278,22 @@ for year, row in df_bm.set_index("year").iterrows():
 ax.set_xlim(lims)
 ax.set_ylim(lims)
 
+ax.set_xlabel("Anomalie biomasse sans tendance (ancien) [%]")
+ax.set_ylabel("Anomalie biomasse avec tendance (proposé) [%]")
+
 ax.spines["top"].set_visible(False)
 ax.spines["right"].set_visible(False)
+
+ax.set_title(
+    "Comparaison des seuils de biomasse avec et sans tendance\n"
+    f"Période de retour = {fixed_rp} ans"
+)
 ```
 
 ```python
+trend_thresh
+```
 
+```python
+27 / 7
 ```
