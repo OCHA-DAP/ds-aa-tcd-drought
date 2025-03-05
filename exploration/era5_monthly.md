@@ -39,6 +39,10 @@ da = da.rio.write_crs(4326)
 ```
 
 ```python
+da
+```
+
+```python
 adm2 = codab.load_codab()
 adm2_aoi = adm2[adm2["ADM1_PCODE"].isin(constants.NEW_ADM1_AOI_PCODES)]
 ```

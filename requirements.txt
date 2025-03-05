@@ -12,3 +12,4 @@ tqdm==4.66.1
 matplotlib==3.8.2
 cftime==1.6.3
 statsmodels==0.14.4
+bottleneck==1.4.2
