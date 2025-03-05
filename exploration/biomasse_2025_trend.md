@@ -14,8 +14,9 @@ jupyter:
 ---
 
 # Biomasse trend check
+<!-- markdownlint-disable MD013 -->
 
-Note: this biomasse was aggregated to the old (2022 framework) admins.
+Note: this biomasse was aggregated to the old (2022 framework) admins, so can basically be ignored. It was just an initial look at the biomasse trend.
 
 ```python
 %load_ext jupyter_black

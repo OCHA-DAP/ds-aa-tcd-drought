@@ -14,6 +14,9 @@ jupyter:
 ---
 
 # Biomasse 2025
+<!-- markdownlint-disable MD013 -->
+
+Looking at Biomasse trend and setting thresholds
 
 ```python
 %load_ext jupyter_black
@@ -36,6 +39,10 @@ from src.utils import blob_utils
 ```python
 NEW_ADM1_AOI_PCODES
 ```
+
+## Process and load Biomasse
+
+Commented out steps can be skipped since they have already been run.
 
 ```python
 # bm.download_dmp(admin_level="ADM1")
@@ -70,6 +77,8 @@ df_bm
 df_bm["biomasse"].mean()
 ```
 
+## Check trend
+
 ```python
 col = "biomasse"
 X = sm.add_constant(df_bm.index)
@@ -82,28 +91,7 @@ df_bm[f"{col}_linearfit"] = model.fittedvalues
 df_bm
 ```
 
-```python
-fig, ax = plt.subplots(dpi=200)
-
-df_bm.set_index("year")["biomasse"].plot(
-    ax=ax, color="forestgreen", linestyle="-"
-)
-df_bm.set_index("year")["biomasse_linearfit"].plot(
-    ax=ax, color="grey", linestyle="--", linewidth=1
-)
-
-ax.legend(["Biomasse", "Ajustement linéaire"])
-
-ax.set_xlim(df_bm["year"].min(), df_bm["year"].max())
-
-ax.set_xlabel("Année")
-ax.set_ylabel("Mesure de biomasse absolu")
-
-ax.set_title("Tendance de biomasse")
-
-ax.spines["top"].set_visible(False)
-ax.spines["right"].set_visible(False)
-```
+### Plot trend
 
 ```python
 # Fit the OLS model
@@ -175,6 +163,8 @@ df_bm.set_index("year")[
 ].plot()
 ```
 
+## Calculate RP
+
 ```python
 for x in ["", "_linearfit"]:
     col = f"biomasse{x}_anomaly"
@@ -186,11 +176,13 @@ df_bm
 ```
 
 ```python
+# save for loading in combined_rp_2025.ipynb
 blob_name = f"{blob_utils.PROJECT_PREFIX}/processed/biomasse_d24_2025.parquet"
 blob_utils.upload_parquet_to_blob(df_bm, blob_name)
 ```
 
 ```python
+# check what RP would be now with old thresh
 df_interp = df_bm.sort_values("biomasse_anomaly")
 old_rp = np.interp(
     80, df_interp["biomasse_anomaly"], df_interp["biomasse_anomaly_rp"]
@@ -202,6 +194,7 @@ old_rp
 ```
 
 ```python
+# check linearfit thresh with the old RP
 df_interp = df_bm.sort_values("biomasse_linearfit_anomaly", ascending=False)
 new_thresh = np.interp(
     old_rp,
@@ -215,12 +208,20 @@ new_thresh
 ```
 
 ```python
+# check actual values
+# notably, to get a 5-yr empirical RP, we have to split between the
+# 2017 and 2002 values, which are VERY close
+# so, we really need to define the threshold with at least one decimal place
 df_bm.sort_values("biomasse_linearfit_anomaly")
 ```
 
 ```python
 df_bm.sort_values("biomasse_anomaly")
 ```
+
+### Plot activations
+
+With fixed RP (taken from combined RP analysis)
 
 ```python
 fixed_rp = 5
@@ -292,8 +293,4 @@ ax.set_title(
 
 ```python
 trend_thresh
-```
-
-```python
-27 / 7
 ```

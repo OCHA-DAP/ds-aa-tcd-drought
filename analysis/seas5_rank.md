@@ -13,7 +13,7 @@ jupyter:
     name: ds-aa-tcd-drought
 ---
 
-# SEAS5 Z-score
+# SEAS5 rank
 <!-- markdownlint-disable MD013 -->
 
 Doing the same thing as in `ecmwf_switch` but with rank
@@ -44,28 +44,14 @@ from src.utils import blob_utils
 from src.constants import *
 ```
 
+## Load and process rasters
+
 ```python
 adm1 = codab.load_codab_from_blob(admin_level=1, aoi_only=True)
 ```
 
 ```python
 da_seas5 = seas5.open_seas5_rasters()
-```
-
-```python
-da_seas5.isel(lt=0, issued_month=0, year=0).plot()
-```
-
-```python
-da_seas5.isel(lt=-1, issued_month=0, year=0).plot()
-```
-
-```python
-da_seas5.isel(lt=0, issued_month=-1, year=0).plot()
-```
-
-```python
-da_seas5.isel(lt=-1, issued_month=-1, year=0).plot()
 ```
 
 ```python
@@ -79,6 +65,7 @@ da_seas5_clip
 ```
 
 ```python
+# have to rechunk with all years as one to allow rank calculation
 da_seas5_clip_yearchunk = da_seas5_clip.chunk({"year": -1})
 ```
 
@@ -95,9 +82,13 @@ with ProgressBar():
 da_seas5_rank_computed
 ```
 
+Look at ranks for random pixel to check distribution looks plausible
+
 ```python
 da_seas5_rank_computed.isel(x=50, y=30, issued_month=0)
 ```
+
+Plot a couple years to make sure they look sensible
 
 ```python
 da_seas5_rank_computed.sel(year=1999, issued_month=6).plot()
@@ -106,6 +97,8 @@ da_seas5_rank_computed.sel(year=1999, issued_month=6).plot()
 ```python
 da_seas5_rank_computed.sel(year=2002, issued_month=6).plot()
 ```
+
+It does seem weird that the value is 1 almost everywhere in 1999. So, just to be absolutely sure we're calculating the spatial quantile in the right direction, calculate it for both `ORIGINAL_Q` and `1 - ORIGINAL_Q`. The inverse one (`1 - ORIGINAL_Q`) should always be higher than (or equal to) the normal one, since it's the highest quantile (0.8 instead of 0.2).
 
 ```python
 da_seas5_rank_q = da_seas5_rank.quantile(q=ORIGINAL_Q, dim=["x", "y"])
@@ -124,6 +117,8 @@ da_seas5_rank_q_test = da_seas5_rank.quantile(q=1 - ORIGINAL_Q, dim=["x", "y"])
 with ProgressBar():
     da_seas5_rank_q_test_computed = da_seas5_rank_q_test.compute()
 ```
+
+From the plot below, looks like we're good.
 
 ```python
 fig, ax = plt.subplots()
@@ -165,6 +160,8 @@ df_seas5["window"] = df_seas5["issued_month"].apply(
     lambda x: 1 if x <= 4 else 2
 )
 ```
+
+Have a quick look at combined RPs. Not that important since ultimately we'll be picking something that fits with the observational as well.
 
 ```python
 df_seas5 = calculate_groups_rp(df_seas5, by=["issued_month"])
@@ -266,6 +263,8 @@ df_seas5_recent.pivot(index="year", columns="issued_month", values="q").plot()
 df_seas5_recent
 ```
 
+Save quantile values to blob to read them in `combined_rp_2025.ipynb`
+
 ```python
 blob_name = f"{blob_utils.PROJECT_PREFIX}/processed/seas5_recent_2025.parquet"
 blob_utils.upload_parquet_to_blob(df_seas5_recent, blob_name)
@@ -298,6 +297,12 @@ df_threshs
 ```python
 df_seas5_recent
 ```
+
+## Plotting
+
+### RP-based threshold plot
+
+Calculate thresholds individually for each month, with a fixed individual RP.
 
 ```python
 fig, ax = plt.subplots(dpi=200, figsize=(7, 7))
@@ -381,6 +386,15 @@ ax.set_ylabel("Période de retour de prévision (ans)")
 ax.spines["top"].set_visible(False)
 ax.spines["right"].set_visible(False)
 ```
+
+### Fixed threshold plot
+
+Set a fixed threshold for the different months. This seems reasonable as:
+
+- We can't really say whether the spatial quantile values we're plotting have a different distribution from issue month to issue month, so it doesn't really make sense to fix the threshold independently for each one.
+- Having the same threshold for each month is just easier to remember and easier to explain.
+
+Here the `thresh` is hard-coded as this is the number that's going in the framework document. It's taken from the combiend RP analysis in `combined_rp_2025.ipynb` (being the option that was determined to be most appropriate after working group discussions).
 
 ```python
 fig, ax = plt.subplots(dpi=200, figsize=(7, 7))
@@ -472,11 +486,17 @@ ax.set_ylabel(
 # ax.spines["right"].set_visible(False)
 ```
 
+Just double-checking the historical activations per window.
+
 ```python
 thresh = 0.1
 dff = df_seas5_recent[df_seas5_recent["q"] <= thresh]
 dff.groupby(["window"])["year"].nunique()
 ```
+
+### Issued-month-wise plot
+
+From here, we can see the values grouped by issued month instead of year. We can see that it's plausible the values from the issued months come from the same distribution.
 
 ```python
 fig, ax = plt.subplots(figsize=(6, 8))
@@ -497,20 +517,9 @@ ax.set_xticks([3, 4, 5, 6])
 ax.set_xlim(2, 7)
 ```
 
-```python
-for mo, group in df_seas5_recent.groupby("issued_month"):
-    display(group.sort_values("q"))
-```
+## RP modeling
 
-```python
-df_pivot_recent = df_seas5_recent.pivot(
-    columns="issued_month", values="q", index="year"
-)
-df_pivot_recent = df_pivot_recent.rename(
-    columns={x: f"issued_{x}" for x in df_pivot_recent.columns}
-)
-df_pivot_recent
-```
+This section can be ignored. If anything it just shows that fitting a distribution to the values doesn't really make sense. Also, the values from the various issue months are not necessarily from different distributions.
 
 ```python
 def fit_beta_rp(issued_month, rp_fit):

@@ -14,6 +14,9 @@ jupyter:
 ---
 
 # Combined RP - 2025
+<!-- markdownlint-disable MD013 -->
+
+Combining SEAS5 and Biomasse triggers to assess combined RP
 
 ```python
 %load_ext jupyter_black
@@ -34,6 +37,8 @@ from src.constants import *
 from src.utils.rp_calc import calculate_one_group_rp
 from src.utils import blob_utils
 ```
+
+## Load and merge data
 
 ```python
 blob_name = f"{blob_utils.PROJECT_PREFIX}/processed/biomasse_d24_2025.parquet"
@@ -65,21 +70,28 @@ df_combined = df_seas5_yearly.merge(
 )
 ```
 
-```python
-np.arange(0, 1, 0.01)
-```
+## Compare combinations
+
+### Iterate over combinations
+
+In the cell below we iterate over all the possible trigger combinations.
 
 ```python
 dicts = []
-rp_based = True
+# set to True for different thresholds per issued month
+# set to False for fixed threshold (this is what is in the framework)
+rp_based = False
 
 if rp_based:
     fcast_values = range(1, len(df_combined) + 1)
 else:
     fcast_values = np.arange(0, 1, 0.01)
 
+# being lazy and just setting rank_fcast to either the rank cutoff or absolute
+# cutoff, depending on whether we are doing rp_based
 for rank_fcast in fcast_values:
     if rp_based:
+        # filter by rank
         rp_fcast_ind = (len(df_combined) + 1) / (rank_fcast)
         dff_1 = df_combined[
             (df_combined[3].rank(ascending=False) <= rank_fcast)
@@ -96,6 +108,7 @@ for rank_fcast in fcast_values:
             | (df_combined[6].rank() <= rank_fcast)
         ]
     else:
+        # filter by absolute value
         rp_fcast_ind = rank_fcast
         dff_1 = df_combined[
             (df_combined[3] <= rank_fcast) | (df_combined[4] <= rank_fcast)
@@ -118,8 +131,6 @@ for rank_fcast in fcast_values:
     except ZeroDivisionError:
         rp_2 = np.inf
 
-    # if rp_fcast_ind > 8:
-    #     display(dff_fcast)
     try:
         rp_fcast = (len(df_combined) + 1) / len(dff_fcast)
     except ZeroDivisionError:
@@ -171,6 +182,9 @@ df_rps
 ```
 
 ```python
+# filter to acceptable RPs
+# this can be done various ways but ultimately the 4.5 was
+# selected by CERF
 df_rps_acceptable = df_rps[
     (df_rps["rp_any"] == 4.5)
     & (df_rps["rp_1"] != np.inf)
@@ -179,6 +193,7 @@ df_rps_acceptable = df_rps[
 ```
 
 ```python
+# plot the options
 df_rps_acceptable.plot(x="rp_fcast_ind", y="rp_obsv", marker=".", linewidth=0)
 ```
 
@@ -186,7 +201,14 @@ df_rps_acceptable.plot(x="rp_fcast_ind", y="rp_obsv", marker=".", linewidth=0)
 df_rps_acceptable
 ```
 
+### Pick options for further plotting
+
 ```python
+# picking options from table above by index
+# these are selected based on having the lowest rps for
+# various triggers- this could be done programatically
+# but just being lazy here (and more flexible)
+
 # for 3.9 yr overall:
 # choices_index = [5, 27]
 # for 4.5 yr overall:
@@ -194,12 +216,14 @@ df_rps_acceptable
 # for 4.3 overall from 2000 onwards:
 # choices_index = [3, 25]
 # for 4.5 with rank SEAS5:
-choices_index = [3, 27]
+# choices_index = [3, 27]
 # for 4.5 with rank SEAS5 fixed thresh:
-# choices_index = [394, 471]
+choices_index = [394, 471]
 
 display(df_rps_acceptable.loc[choices_index])
 ```
+
+### Plot comparison between selected options
 
 ```python
 df_plot = (100 / df_rps_acceptable.loc[choices_index]).copy()
@@ -238,6 +262,10 @@ ax.set_title(
 ax.spines["top"].set_visible(False)
 ax.spines["right"].set_visible(False)
 ```
+
+### Display yearly activations
+
+Various options compared.
 
 ```python
 def highlight_true(value):
@@ -291,10 +319,6 @@ display_yearly_activations(13.5, 13.5)
 ```
 
 ```python
-df_combined[3] <= 0.15
-```
-
-```python
 def display_yearly_activations_fixed_seas5(seas5_thresh, rp_obsv):
     df_disp = (
         df_combined.copy()
@@ -320,11 +344,8 @@ def display_yearly_activations_fixed_seas5(seas5_thresh, rp_obsv):
 ```
 
 ```python
+# here is the option we ultimately settled on
 display_yearly_activations_fixed_seas5(0.15, 5.4)
-```
-
-```python
-27 / 3
 ```
 
 ```python
@@ -332,13 +353,5 @@ display_yearly_activations_fixed_seas5(0.18, 6.75)
 ```
 
 ```python
-27 / 6
-```
 
-```python
-27 / 6
-```
-
-```python
-26 / 4
 ```
