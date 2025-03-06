@@ -47,6 +47,12 @@ from src.utils.raster import upsample_dataarray
 THRESH = 0.15
 ```
 
+```python
+# ORIGINAL_Q is set to 20%
+# (spatial quantile from original framework, kept for this one)
+ORIGINAL_Q
+```
+
 ## Load data
 
 ### CODAB
@@ -61,7 +67,7 @@ Set `issued_month` and `year` to choose which month we're monitoring from
 
 ```python
 issued_month = 3
-year = 2024
+year = 2025
 ```
 
 ```python
@@ -79,6 +85,10 @@ mo_lt_combos
 
 ```python
 da_seas5 = seas5.open_seas5_rasters(mo_lt_combos=mo_lt_combos, years=[year])
+```
+
+```python
+da_seas5
 ```
 
 ```python
