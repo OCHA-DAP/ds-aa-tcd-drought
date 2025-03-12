@@ -1,9 +1,9 @@
 from typing import List, Literal
 
+import ocha_stratus as stratus
 import xarray as xr
 from dask.diagnostics import ProgressBar
 from tqdm.auto import tqdm
-import ocha_stratus as stratus
 
 from src.constants import ORIGINAL_Q, PROJECT_PREFIX
 from src.datasources import codab

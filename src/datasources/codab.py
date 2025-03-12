@@ -3,11 +3,11 @@ import shutil
 from pathlib import Path
 
 import geopandas as gpd
+import ocha_stratus as stratus
 import requests
 
 from src.constants import ISO3, NEW_ADM1_AOI_PCODES, PROJECT_PREFIX
 from src.utils import blob_utils
-import ocha_stratus as stratus
 
 DATA_DIR = Path(os.environ["AA_DATA_DIR_NEW"])
 CODAB_RAW_DIR = DATA_DIR / "public" / "raw" / "tcd" / "codab"
