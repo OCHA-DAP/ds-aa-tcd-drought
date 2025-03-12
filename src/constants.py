@@ -1,3 +1,5 @@
+PROJECT_PREFIX = "ds-aa-tcd-drought"
+
 ADM1_AOI_PCODES = ["TD07", "TD06", "TD19", "TD01", "TD17"]
 ADM2_AOI_PCODES = [
     "TD0101",
