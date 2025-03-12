@@ -29,11 +29,11 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import statsmodels.api as sm
 import numpy as np
+import ocha_stratus as stratus
 
 from src.datasources import biomasse as bm
 from src.constants import *
 from src.utils.rp_calc import calculate_one_group_rp
-from src.utils import blob_utils
 ```
 
 ```python
@@ -177,8 +177,8 @@ df_bm
 
 ```python
 # save for loading in combined_rp_2025.ipynb
-blob_name = f"{blob_utils.PROJECT_PREFIX}/processed/biomasse_d24_2025.parquet"
-blob_utils.upload_parquet_to_blob(df_bm, blob_name)
+blob_name = f"{PROJECT_PREFIX}/processed/biomasse_d24_2025.parquet"
+stratus.upload_parquet_to_blob(df_bm, blob_name)
 ```
 
 ```python

@@ -36,11 +36,11 @@ import statsmodels.api as sm
 from dask.diagnostics import ProgressBar
 from scipy.stats import skewnorm, beta, f_oneway, kruskal
 from matplotlib.ticker import LogLocator, FuncFormatter
+import ocha_stratus as stratus
 
 from src.datasources import seas5, iri, codab
 from src.utils.raster import upsample_dataarray
 from src.utils.rp_calc import calculate_groups_rp
-from src.utils import blob_utils
 from src.constants import *
 ```
 
@@ -131,8 +131,8 @@ df_seas5_rank_q = da_seas5_rank_q_computed.to_dataframe("q")["q"].reset_index()
 ```
 
 ```python
-blob_name = f"{blob_utils.PROJECT_PREFIX}/processed/seas5/seas5_rank_q{ORIGINAL_Q*100:.0f}.parquet"  # noqa
-blob_utils.upload_parquet_to_blob(df_seas5_rank_q, blob_name)
+blob_name = f"{PROJECT_PREFIX}/processed/seas5/seas5_rank_q{ORIGINAL_Q*100:.0f}.parquet"  # noqa
+stratus.upload_parquet_to_blob(df_seas5_rank_q, blob_name)
 ```
 
 ## Calculate threshs
@@ -266,8 +266,8 @@ df_seas5_recent
 Save quantile values to blob to read them in `combined_rp_2025.ipynb`
 
 ```python
-blob_name = f"{blob_utils.PROJECT_PREFIX}/processed/seas5_recent_2025.parquet"
-blob_utils.upload_parquet_to_blob(df_seas5_recent, blob_name)
+blob_name = f"{PROJECT_PREFIX}/processed/seas5_recent_2025.parquet"
+stratus.upload_parquet_to_blob(df_seas5_recent, blob_name)
 ```
 
 ```python

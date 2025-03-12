@@ -36,11 +36,11 @@ import statsmodels.api as sm
 from dask.diagnostics import ProgressBar
 from scipy.stats import skewnorm
 from matplotlib.ticker import LogLocator, FuncFormatter
+import ocha_stratus as stratus
 
 from src.datasources import seas5, iri, codab
 from src.utils.raster import upsample_dataarray
 from src.utils.rp_calc import calculate_groups_rp
-from src.utils import blob_utils
 from src.constants import *
 ```
 
@@ -168,8 +168,8 @@ f"{q*100:.0f}"
 ```
 
 ```python
-blob_name = f"{blob_utils.PROJECT_PREFIX}/processed/seas5/seas5_zscore_q{q*100:.0f}.parquet"
-blob_utils.upload_parquet_to_blob(df_seas5_zscore_q, blob_name)
+blob_name = f"{PROJECT_PREFIX}/processed/seas5/seas5_zscore_q{q*100:.0f}.parquet"
+stratus.upload_parquet_to_blob(df_seas5_zscore_q, blob_name)
 ```
 
 ```python
@@ -297,8 +297,8 @@ df_seas5_recent
 ```
 
 ```python
-blob_name = f"{blob_utils.PROJECT_PREFIX}/processed/seas5_recent_2025.parquet"
-blob_utils.upload_parquet_to_blob(df_seas5_recent, blob_name)
+blob_name = f"{PROJECT_PREFIX}/processed/seas5_recent_2025.parquet"
+stratus.upload_parquet_to_blob(df_seas5_recent, blob_name)
 ```
 
 ```python

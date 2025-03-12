@@ -33,7 +33,6 @@ from matplotlib.ticker import LogLocator, FuncFormatter
 from src.datasources import seas5, codab, iri
 from src.utils.raster import upsample_dataarray
 from src.constants import *
-from src.utils import blob_utils
 from src.utils.rp_calc import calculate_groups_rp
 ```
 
