@@ -66,7 +66,7 @@ adm1 = codab.load_codab_from_blob(admin_level=1, aoi_only=True)
 Set `issued_month` and `year` to choose which month we're monitoring from
 
 ```python
-issued_month = 3
+issued_month = 5
 year = 2025
 ```
 
@@ -261,15 +261,23 @@ cbar.set_label("Centile historique")
 cbar.ax.yaxis.set_major_formatter(FuncFormatter(lambda x, _: f"{x*100:.0f}e"))
 ```
 
+```python
+da_current_percentile.plot()
+```
+
 ## Testing
 
-We can verify that this method of percentile rank calculation correponds to that for the threshold calculation by running the monitoring for any year within the reference period (1981-2024) and comparing the results
+We can verify that this method of percentile rank calculation correponds to that for the threshold calculation by running the monitoring for any year within the reference period (1981-2024) and comparing the results. To run this test, go back and change `year` to any year within 1981-2024, then re-run all the cells below.
 
 ```python
 # calculate rank using method in thresholds
 da_seas5_historical_ranks = da_seas5_historical_computed.rank(
     dim="year", pct=True
 )
+```
+
+```python
+da_seas5_historical_ranks
 ```
 
 ```python

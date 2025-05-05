@@ -31,8 +31,18 @@ from src import constants
 ```
 
 ```python
+from src.datasources import iri
+```
+
+```python
 # note: this requires Python 3.9, for some reason
 iri.download_iri()
+```
+
+```python
+os.environ["IRI_AUTH"] = (
+    "306df56212e0724b93a2b968a156c8ecc487253469ea36303b9c2a67ea0ab321c1f5d1808c8c755158d19dbef9543d7144b8f9dd"
+)
 ```
 
 ```python
@@ -50,10 +60,14 @@ ds
 ```
 
 ```python
-F_max = float(ds.F.max().values)
+# run this if dates are already in datetime format
+date_str = str(ds.F.max().values).split(" ")[0]
 ```
 
 ```python
+# otherwise run this
+F_max = float(ds.F.max().values)
+
 month = int(F_max % 12) + 1
 year = int(F_max // 12) + 1960
 date_str = f"{year}-{month:02}-15"
