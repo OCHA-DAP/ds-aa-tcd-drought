@@ -237,8 +237,8 @@ df_plot = df_plot[["rp_1", "rp_2", "rp_obsv", "rp_any"]].rename(
     }
 )
 df_plot["name"] = [
-    "Option 1 (favorise observationnel)",
-    "Option 2 (favorise prévisions)",
+    "Option 1",
+    "Option 2",
 ]
 
 df_melted = df_plot.melt(id_vars="name")
