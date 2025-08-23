@@ -1,12 +1,12 @@
 from typing import List, Literal
 
+import ocha_stratus as stratus
 import xarray as xr
 from dask.diagnostics import ProgressBar
 from tqdm.auto import tqdm
 
-from src.constants import ORIGINAL_Q
+from src.constants import ORIGINAL_Q, PROJECT_PREFIX
 from src.datasources import codab
-from src.utils import blob_utils
 from src.utils.raster import upsample_dataarray
 
 START_YEAR = 1981
@@ -17,7 +17,7 @@ def open_seas5_cog(issued_date_str: str, lt: int):
     blob_name = (
         f"seas5/monthly/processed/precip_em_i{issued_date_str}_lt{lt}.tif"
     )
-    return blob_utils.open_blob_cog(
+    return stratus.open_blob_cog(
         blob_name, stage="prod", container_name="raster"
     )
 
@@ -63,16 +63,16 @@ def process_seas5_rasters():
     with ProgressBar():
         da_seas5_q_computed = da_seas5_q.compute()
     df_seas5 = da_seas5_q_computed.to_dataframe("q")["q"].reset_index()
-    blob_name = f"{blob_utils.PROJECT_PREFIX}/processed/seas5/seas5_original_trigger_raster_stats.parquet"  # noqa
-    blob_utils.upload_parquet_to_blob(df_seas5, blob_name)
+    blob_name = f"{PROJECT_PREFIX}/processed/seas5/seas5_original_trigger_raster_stats.parquet"  # noqa
+    stratus.upload_parquet_to_blob(df_seas5, blob_name)
 
 
 def load_seas5_stats(
     variable: Literal["zscore", "abs", "rank"] = "abs", q: float = ORIGINAL_Q
 ):
     if variable == "abs":
-        blob_name = f"{blob_utils.PROJECT_PREFIX}/processed/seas5/seas5_original_trigger_raster_stats.parquet"  # noqa
+        blob_name = f"{PROJECT_PREFIX}/processed/seas5/seas5_original_trigger_raster_stats.parquet"  # noqa
     else:
-        blob_name = f"{blob_utils.PROJECT_PREFIX}/processed/seas5/seas5_{variable}_q{q*100:.0f}.parquet"  # noqa
-    df_seas5 = blob_utils.load_parquet_from_blob(blob_name)
+        blob_name = f"{PROJECT_PREFIX}/processed/seas5/seas5_{variable}_q{q*100:.0f}.parquet"  # noqa
+    df_seas5 = stratus.load_parquet_from_blob(blob_name)
     return df_seas5

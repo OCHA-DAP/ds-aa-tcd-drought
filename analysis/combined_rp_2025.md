@@ -6,11 +6,11 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.3'
-      jupytext_version: 1.16.1
+      jupytext_version: 1.16.3
   kernelspec:
-    display_name: ds-aa-tcd-drought
+    display_name: Python 3 (ipykernel)
     language: python
-    name: ds-aa-tcd-drought
+    name: python3
 ---
 
 # Combined RP - 2025
@@ -30,19 +30,19 @@ import matplotlib.pyplot as plt
 import statsmodels.api as sm
 import seaborn as sns
 import numpy as np
+import ocha_stratus as stratus
 
 from src.datasources import biomasse as bm
 from src.datasources import seas5
 from src.constants import *
 from src.utils.rp_calc import calculate_one_group_rp
-from src.utils import blob_utils
 ```
 
 ## Load and merge data
 
 ```python
-blob_name = f"{blob_utils.PROJECT_PREFIX}/processed/biomasse_d24_2025.parquet"
-df_bm = blob_utils.load_parquet_from_blob(blob_name)
+blob_name = f"{PROJECT_PREFIX}/processed/biomasse_d24_2025.parquet"
+df_bm = stratus.load_parquet_from_blob(blob_name)
 ```
 
 ```python
