@@ -52,6 +52,6 @@ def load_codab_from_blob(
         shapefile=shapefile,
         stage="dev",
     )
-    if admin_level > 0 & aoi_only:
+    if admin_level > 0 and aoi_only:
         gdf = gdf[gdf["ADM1_PCODE"].isin(NEW_ADM1_AOI_PCODES)]
     return gdf
