@@ -50,11 +50,11 @@ def _raw_blob(filename: str) -> str:
     return f"{blob_utils.PROJECT_PREFIX}/raw/ipc/{filename}"
 
 
-# Headline figures from the most recent CH analysis reported by OCHA but not
-# yet present in the machine-readable CH dataset (IPC API / HDX). Source:
-# OCHA Chad Humanitarian Bulletin, March-April 2026 (cites the March 2026
-# Cadre Harmonisé analysis), on ReliefWeb:
-# https://reliefweb.int/report/chad/chad-humanitarian-bulletin-march-april-2026
+# Headline figures from the most recent CH analysis as quoted by the user from
+# an OCHA Chad source. NB: the exact figures (3.18M / 17.5% / 18.6M) could not
+# be located in any verifiable public OCHA document (the March-April 2026
+# Humanitarian Bulletin does NOT contain them); the precise source is
+# UNCONFIRMED. Treat as a reported, not-yet-verified overlay.
 LATEST_REPORTED = {
     "analysis": "Cadre Harmonisé mars 2026",
     "reference_label": "Jun-Aug",
@@ -73,8 +73,8 @@ LATEST_REPORTED = {
         "Lac",
         "Tandjilé",
     ],
-    "source": "OCHA Tchad — Bulletin humanitaire, mars–avril 2026",
-    "source_url": "https://reliefweb.int/report/chad/chad-humanitarian-bulletin-march-april-2026",  # noqa: E501
+    "source": "OCHA Tchad (analyse CH mars 2026 — source à confirmer)",
+    "source_url": "https://reports.unocha.org/en/country/chad/",
     "note": (
         "Non publié dans le jeu de données CH (API IPC / HDX) au moment de "
         "l'analyse ; pourcentage rapporté sur la population totale estimée."
