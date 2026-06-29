@@ -413,7 +413,8 @@ def make_figures(ts, adm2_geo, adm1_geo):
         a.xaxis.set_major_locator(mdates.YearLocator(2))
         a.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
         a.legend(fontsize=6.5, loc="upper left")
-        a.set_ylim(0, None)
+    # explicit shared y-limit with headroom so peak departments aren't clipped
+    axs[0].set_ylim(0, aoi_ts["frac_phase35"].max() * 1.08)
     for j in range(len(provs), len(axs)):
         axs[j].axis("off")
     fig.suptitle(
