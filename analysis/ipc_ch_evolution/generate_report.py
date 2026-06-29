@@ -76,10 +76,6 @@ def _norm_pcode(s):
 
 # CH analysis cycle → projection lead time for the Jun–Aug lean season
 _LEAN_LEAD = {"Sep-Dec": "long", "Jan-May": "short", "Jun-Aug": "inseason"}
-_LEAD_LABEL = {
-    "long": "Projection long terme (analyse nov., ~8 mois avant)",
-    "short": "Projection court terme (analyse mars, ~4 mois avant)",
-}
 
 
 def lean_estimates_by_lead(full, aoi_only=False, min_areas=50):
@@ -192,60 +188,30 @@ def make_figures(ts, adm2_geo, adm1_geo):
     ax.legend(loc="upper left", framealpha=0.9, fontsize=8.5)
     _save(fig, "natl_vs_aoi")
 
-    # --- 1b. seasonal contrast: lean-season peak vs post-harvest trough ----
-    fig, ax = plt.subplots(figsize=(11, 4.0))
-    ax.plot(
-        natl_lean.index,
-        natl_lean["frac_phase35"],
-        color="#b35f00",
-        lw=2.4,
-        marker="o",
-        ms=5,
-        label="Soudure juin–août (pic projeté)",
-    )
-    ax.plot(
-        natl_ph.index,
-        natl_ph["frac_phase35"],
-        color="#6b8e23",
-        lw=2.0,
-        marker="o",
-        ms=4,
-        ls="--",
-        label="Post-récolte sep–déc (creux observé)",
-    )
-    ax.fill_between(
-        natl_lean.index,
-        natl_ph["frac_phase35"].reindex(natl_lean.index),
-        natl_lean["frac_phase35"],
-        color="#b35f00",
-        alpha=0.07,
-        interpolate=True,
-    )
-    ax.set_ylim(0, None)
-    ax.set_xlim(min(natl_lean.index.min(), natl_ph.index.min()), xmax)
-    ax.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(1.0))
-    ax.xaxis.set_major_locator(mdates.YearLocator())
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
-    ax.set_ylabel("Part de population en phase 3+")
-    ax.set_title(
-        "Amplitude saisonnière nationale — soudure vs post-récolte",
-        fontweight="bold",
-        loc="left",
-    )
-    ax.legend(loc="upper left", framealpha=0.9, fontsize=9)
-    _save(fig, "seasonal")
-
-    # --- 1c. lean-season projection revision (long vs short lead) ----------
-    # A single lean season is projected twice — by the prior November analysis
-    # (~8 mo ahead) and the March analysis (~4 mo ahead). There is no in-season
-    # "observation": the soudure is always forecast, never measured after.
+    # --- 1b. national CH signal: observed post-harvest vs lean projections -
+    # The lean season (Jun–Aug) is ALWAYS projected, never observed — so each
+    # season carries two estimates: a long-lead (Nov) and a short-lead (March)
+    # projection. The only observed reading is the post-harvest (Sep–Dec)
+    # trough. One chart = seasonal amplitude + forecast revision together.
     le = lean_estimates_by_lead(ipc.load_ch_full())
     piv = le.pivot(
         index="reference_year", columns="lead", values="frac_phase35"
     )
-    yrs = piv.index
-    fig, ax = plt.subplots(figsize=(11, 4.4))
-    for y in yrs:  # vertical connector = how much the outlook was revised
+    ph_year = natl_ph.copy()
+    ph_year.index = natl_ph.index.year
+    fig, ax = plt.subplots(figsize=(11, 4.6))
+    ax.plot(
+        ph_year.index,
+        ph_year["frac_phase35"],
+        color="#6b8e23",
+        lw=2.0,
+        ms=5,
+        marker="o",
+        ls="--",
+        label="Post-récolte sep–déc (situation observée)",
+        zorder=2,
+    )
+    for y in piv.index:  # connector = how much the outlook was revised
         if {"long", "short"} <= set(piv.columns) and not piv.loc[
             y, ["long", "short"]
         ].isna().any():
@@ -257,23 +223,23 @@ def make_figures(ts, adm2_geo, adm1_geo):
                 zorder=1,
             )
     ax.plot(
-        yrs,
+        piv.index,
         piv.get("long"),
         "o-",
         color=GREY,
         lw=2.0,
         ms=6,
-        label=_LEAD_LABEL["long"],
+        label="Soudure — projection long terme (analyse nov.)",
         zorder=3,
     )
     ax.plot(
-        yrs,
+        piv.index,
         piv.get("short"),
         "o-",
         color="#b35f00",
-        lw=2.2,
+        lw=2.4,
         ms=6,
-        label=_LEAD_LABEL["short"],
+        label="Soudure — projection court terme (analyse mars)",
         zorder=4,
     )
     ax.plot(
@@ -285,22 +251,22 @@ def make_figures(ts, adm2_geo, adm1_geo):
         mfc="#ffd24d",
         mec="#111",
         zorder=6,
-        label=f"{rep['analysis']} court terme (OCHA) · "
+        label=f"Soudure {rep['analysis']} (OCHA) · "
         f"{rep['phase3plus_people']/1e6:.2f} M",
     )
     ax.set_ylim(0, None)
     ax.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(1.0))
-    ax.xaxis.set_major_locator(mpl.ticker.MultipleLocator(1))
-    ax.set_xlabel("Saison de soudure (juin–août)")
+    ax.xaxis.set_major_locator(mpl.ticker.MultipleLocator(2))
+    ax.set_xlabel("Année")
     ax.set_ylabel("Part nationale en phase 3+")
     ax.set_title(
-        "Révision de la projection de soudure — chaque saison est "
-        "projetée deux fois",
+        "Anatomie du signal CH national — observé (post-récolte) vs "
+        "projeté (soudure)",
         fontweight="bold",
         loc="left",
     )
-    ax.legend(loc="upper left", framealpha=0.9, fontsize=8.5)
-    _save(fig, "lean_revision")
+    ax.legend(loc="upper left", framealpha=0.9, fontsize=8)
+    _save(fig, "national_anatomy")
 
     # --- 2. national phase composition at the lean-season peak ------------
     nat = lean.groupby("valid_date")[
@@ -719,38 +685,34 @@ a{{color:var(--accent-dk);}}
   gris = pays entier. ★ = projection mars 2026 (OCHA, % sur population totale ;
   les séries CH sont en % de la population analysée).</figcaption></figure>
 </section>
-<section><h2>2. Révision de la projection de soudure</h2>
-  <p class="sub">Chaque soudure est projetée <b>deux fois</b> : par
-  l'analyse de novembre (long terme, ~8 mois avant) puis affinée par
-  l'analyse de mars (court terme, ~4 mois avant). Le CH ne produit pas
-  d'<i>observation</i> en
-  saison — la soudure est toujours une projection. Le trait court terme passe
-  le plus souvent <b>au-dessus</b> du long terme : l'analyse de mars revoit la
-  situation à la hausse. L'étoile = projection court terme mars 2026 (OCHA),
-  cohérente avec ce schéma, mais pas encore dans le jeu de données CH.</p>
-  <figure>{_img('lean_revision', 'Révision projection soudure')}
-  <figcaption>National. Gris = projection long terme (analyse nov.) ; orange =
-  projection court terme (analyse mars) ; trait vertical = ampleur de la
+<section><h2>2. Anatomie du signal national — observé vs projeté</h2>
+  <p class="sub">Le CH n'analyse <b>jamais</b> la soudure en cours : la
+  juin–août est <i>toujours</i> une projection, jamais une observation. Chaque
+  saison est donc projetée <b>deux fois</b> — par l'analyse de novembre (long
+  terme, ~8 mois avant) puis affinée par celle de mars (court terme, ~4 mois
+  avant). La seule lecture <i>observée</i> est le creux de post-récolte
+  (sep–déc). Ce graphique réunit les deux idées :
+  l'<b>amplitude saisonnière</b> (soudure projetée bien au-dessus du
+  post-récolte observé) et la <b>révision
+  de la prévision</b> (mars passe le plus souvent au-dessus de novembre). Le
+  creux observé ne mesure pas la soudure elle-même mais la reprise qui suit la
+  récolte — il n'existe pas de vérité-terrain CH pour la soudure. L'étoile =
+  projection court terme mars 2026 (OCHA), pas encore dans le jeu de données
+  CH.</p>
+  <figure>{_img('national_anatomy', 'Signal CH national observé vs projeté')}
+  <figcaption>National. Vert pointillé = post-récolte sep–déc (observé) ;
+  gris = soudure projection long terme (nov.) ; orange = soudure projection
+  court terme (mars) ; trait vertical gris = ampleur de la
   révision.</figcaption></figure>
 </section>
-<section><h2>3. Pourquoi la soudure ? Amplitude saisonnière</h2>
-  <p class="sub">Le CH analyse deux fois par an et publie, à chaque fois, une
-  situation « courante » (pic après récolte, sep–déc = creux) et une projection
-  de <b>soudure (juin–août)</b> = pic. Les deux saisons se dégradent depuis
-  2022, mais c'est le pic de soudure qui pilote les besoins ; le suivre seul
-  donne une tendance lisible.</p>
-  <figure>{_img('seasonal', 'Soudure vs post-récolte national')}
-  <figcaption>National. Trait plein = soudure juin–août (pic projeté) ;
-  pointillé = post-récolte sep–déc (creux observé).</figcaption></figure>
-</section>
-<section><h2>4. Composition nationale par phase (soudure)</h2>
+<section><h2>3. Composition nationale par phase (soudure)</h2>
   <p class="sub">Décomposition de la population par phase CH à chaque soudure
   juin–août.</p>
   <figure>{_img('national', 'Composition CH nationale soudure')}
   <figcaption>Aires empilées = part de chaque phase ; ligne noire = seuil
   cumulé phase 3+.</figcaption></figure>
 </section>
-<section><h2>5. Évolution par département</h2>
+<section><h2>4. Évolution par département</h2>
   <p class="sub">Une ligne par département, une colonne par période d'analyse
   (toutes saisons), triées par sévérité moyenne. Les départements de la zone
   d'AA (★, en rouge) dominent le haut du classement ; l'alternance de bandes
@@ -760,14 +722,14 @@ a{{color:var(--accent-dk);}}
   période.</figcaption>
   </figure>
 </section>
-<section><h2>6. Zone du cadre d'AA — détail par province (soudure)</h2>
+<section><h2>5. Zone du cadre d'AA — détail par province (soudure)</h2>
   <p class="sub">Les {s['n_aoi']} départements de la zone, par province,
   projection de soudure juin–août — un point par an.</p>
   <figure>{_img('aoi_lines', 'Séries par département zone AA, soudure')}
   <figcaption>Part de population en phase 3+ à la soudure ; un trait par
   département.</figcaption></figure>
 </section>
-<section><h2>7. Cartographie de la soudure (juin–août)</h2>
+<section><h2>6. Cartographie de la soudure (juin–août)</h2>
   <p class="sub">Projection CH de la soudure sur les huit dernières années.
   Contour noir = zone d'AA.</p>
   <figure>{_img('maps', 'Cartes soudure')}
@@ -776,7 +738,7 @@ a{{color:var(--accent-dk);}}
   <figcaption>Projection la plus récente du jeu de données CH.</figcaption>
   </figure>
 </section>
-<section><h2>8. Départements les plus touchés — soudure {latest}</h2>
+<section><h2>7. Départements les plus touchés — soudure {latest}</h2>
   <p class="sub">Classement par part de population en phase 3+. ★ = zone du
   cadre d'AA.</p>
   <div class="cols">
