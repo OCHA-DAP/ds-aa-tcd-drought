@@ -255,18 +255,18 @@ def make_figures(ts, adm2_geo, adm1_geo):
         zorder=4,
     )
     # 2026 short-lead = March 2026 OCHA figure (not yet in the dataset):
-    # dashed/provisional short-lead point with a revision connector
+    # extend the short-lead (court terme) line with a dashed provisional leg
     ry = rep["reference_year"]
     rf = rep["phase3plus_pct_total_pop"]
-    if ry in piv.index and not pd.isna(piv.loc[ry, "long"]):
-        ax.plot(
-            [ry, ry],
-            [piv.loc[ry, "long"], rf],
-            color="#7a0000",
-            lw=1.6,
-            ls=(0, (4, 2)),
-            zorder=5,
-        )
+    short = piv["short"].dropna()
+    ax.plot(
+        [short.index.max(), ry],
+        [short.iloc[-1], rf],
+        color="#b35f00",
+        lw=2.4,
+        ls=(0, (4, 2)),
+        zorder=4,
+    )
     ax.plot(
         ry,
         rf,
@@ -740,8 +740,9 @@ a{{color:var(--accent-dk);}}
   <figure>{_img('national_anatomy', 'Signal CH national observé vs projeté')}
   <figcaption>National. Vert pointillé = post-récolte sep–déc (observé) ;
   gris = soudure projection long terme (nov.) ; orange = soudure projection
-  court terme (mars) ; trait vertical gris = ampleur de la révision ; cercle
-  creux + pointillé rouge = mars 2026 (OCHA, provisoire).</figcaption></figure>
+  court terme (mars) ; trait vertical gris = ampleur de la révision ;
+  prolongement pointillé orange + cercle creux = mars 2026 (OCHA,
+  provisoire).</figcaption></figure>
 </section>
 <section><h2>3. Composition nationale par phase (soudure)</h2>
   <p class="sub">Décomposition de la population par phase CH à chaque soudure
