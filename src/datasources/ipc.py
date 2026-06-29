@@ -52,8 +52,8 @@ def _raw_blob(filename: str) -> str:
 
 # Headline figures from the most recent CH analysis reported by OCHA but not
 # yet present in the machine-readable CH dataset (IPC API / HDX). Source:
-# OCHA Chad situation report "The next lean season will be harder than in 2021"
-# https://reports.unocha.org/en/country/chad/card/6RGW3AN24H/
+# OCHA Chad digital situation reports (March 2026 Cadre Harmonisé analysis)
+# https://reports.unocha.org/en/country/chad/
 LATEST_REPORTED = {
     "analysis": "Cadre Harmonisé mars 2026",
     "reference_label": "Jun-Aug",
@@ -72,10 +72,8 @@ LATEST_REPORTED = {
         "Lac",
         "Tandjilé",
     ],
-    "source": (
-        'OCHA Tchad — "The next lean season will be harder than in 2021"'
-    ),
-    "source_url": "https://reports.unocha.org/en/country/chad/card/6RGW3AN24H/",  # noqa: E501
+    "source": "OCHA Tchad — rapport de situation (Cadre Harmonisé mars 2026)",
+    "source_url": "https://reports.unocha.org/en/country/chad/",
     "note": (
         "Non publié dans le jeu de données CH (API IPC / HDX) au moment de "
         "l'analyse ; pourcentage rapporté sur la population totale estimée."

@@ -117,99 +117,98 @@ def make_figures(ts, adm2_geo, adm1_geo):
     # line avoids the seasonal sawtooth that comes from mixing them.
     lean = ts[ts["reference_label"] == "Jun-Aug"]
     ph = ts[ts["reference_label"] == "Sep-Dec"]
-    aoi_lean = ipc.aggregate(lean[lean["is_aoi"]])
     natl_ph = ipc.aggregate(ph)
 
     # --- 1. lean-season overview: AOI vs national, observed vs projected -
-    # Combines the AOI-vs-national comparison with the national signal's
-    # structure: the lean season (Jun–Aug) is always PROJECTED — twice, at
-    # long lead (Nov) and short lead (Mar) — never observed; the only observed
-    # reading is the post-harvest (Sep–Dec) trough.
-    piv = lean_estimates_by_lead(ipc.load_ch_full()).pivot(
+    # Colour = series (green = post-harvest observed, grey = long-lead
+    # forecast, orange = short-lead forecast); line style = geography
+    # (solid = pays, tireté = zone d'AA). The lean season is always PROJECTED
+    # (twice, long & short lead), never observed; the only observed reading is
+    # the post-harvest trough. The March 2026 OCHA projection is dotted.
+    full = ipc.load_ch_full()
+    GREEN, ORANGE = "#6b8e23", "#b35f00"
+    piv = lean_estimates_by_lead(full).pivot(
         index="reference_year", columns="lead", values="frac_phase35"
     )
-    ph_year = natl_ph.copy()
-    ph_year.index = natl_ph.index.year
-    aoi_year = aoi_lean.copy()
-    aoi_year.index = aoi_lean.index.year
+    piv_aoi = lean_estimates_by_lead(full, aoi_only=True, min_areas=15).pivot(
+        index="reference_year", columns="lead", values="frac_phase35"
+    )
+
+    def _by_year(g):
+        g = g.copy()
+        g.index = g.index.year
+        return g
+
+    natl_ph_y = _by_year(natl_ph)
+    aoi_ph_y = _by_year(ipc.aggregate(ph[ph["is_aoi"]]))
     rep_frac = rep["phase3plus_pct_total_pop"]
     ry = rep["reference_year"]
-    short = piv["short"]
 
-    fig, ax = plt.subplots(figsize=(11, 5.0))
-    # national observed post-harvest trough
+    fig, ax = plt.subplots(figsize=(11, 5.2))
+    series = [
+        (
+            natl_ph_y.index,
+            natl_ph_y["frac_phase35"],
+            GREEN,
+            "-",
+            "Pays — post-récolte (observé)",
+        ),
+        (
+            piv.index,
+            piv["long"],
+            GREY,
+            "-",
+            "Pays — soudure long terme (nov.)",
+        ),
+        (
+            piv.index,
+            piv["short"],
+            ORANGE,
+            "-",
+            "Pays — soudure court terme (mars)",
+        ),
+        (
+            aoi_ph_y.index,
+            aoi_ph_y["frac_phase35"],
+            GREEN,
+            "--",
+            "Zone d'AA — post-récolte (observé)",
+        ),
+        (
+            piv_aoi.index,
+            piv_aoi["long"],
+            GREY,
+            "--",
+            "Zone d'AA — soudure long terme (nov.)",
+        ),
+        (
+            piv_aoi.index,
+            piv_aoi["short"],
+            ORANGE,
+            "--",
+            "Zone d'AA — soudure court terme (mars)",
+        ),
+    ]
+    for x, y, c, ls, lab in series:
+        ax.plot(x, y, color=c, ls=ls, lw=2.0, marker="o", ms=3.5, label=lab)
+    # March 2026 OCHA national projection — dotted, provisional
+    short = piv["short"].dropna()
     ax.plot(
-        ph_year.index,
-        ph_year["frac_phase35"],
-        color="#6b8e23",
-        lw=1.8,
-        marker="o",
-        ms=4,
-        ls="--",
-        zorder=2,
-        label="Pays — post-récolte sep–déc (observé)",
-    )
-    # national soudure long-lead (Nov projection)
-    ax.plot(
-        piv.index,
-        piv["long"],
-        color=GREY,
-        lw=1.8,
-        marker="o",
-        ms=4,
-        zorder=3,
-        label="Pays — soudure long terme (nov.)",
-    )
-    # AOI premium shading vs the national short-lead line
-    ax.fill_between(
-        aoi_year.index,
-        short.reindex(aoi_year.index),
-        aoi_year["frac_phase35"],
-        color=RED,
-        alpha=0.07,
-        interpolate=True,
-        zorder=1,
-    )
-    # national soudure short-lead (Mar projection) + provisional 2026 leg
-    ax.plot(
-        piv.index,
-        short,
-        color="#b35f00",
-        lw=2.2,
-        marker="o",
-        ms=5,
-        zorder=4,
-        label="Pays — soudure court terme (mars)",
-    )
-    s = short.dropna()
-    ax.plot(
-        [s.index.max(), ry],
-        [s.iloc[-1], rep_frac],
-        color="#b35f00",
-        lw=2.2,
-        ls=(0, (4, 2)),
-        zorder=4,
-    )
-    # AOI soudure (framework focus)
-    ax.plot(
-        aoi_year.index,
-        aoi_year["frac_phase35"],
-        color=RED,
-        lw=2.6,
-        marker="o",
-        ms=5,
+        [short.index.max(), ry],
+        [short.iloc[-1], rep_frac],
+        color=ORANGE,
+        lw=2.0,
+        ls=":",
         zorder=5,
-        label="Zone d'AA — soudure",
     )
-    # March 2026 OCHA provisional national point
     ax.plot(
         ry,
         rep_frac,
         marker="o",
         ms=7,
-        color="#b35f00",
+        color=ORANGE,
         mfc="white",
-        mec="#b35f00",
+        mec=ORANGE,
         zorder=6,
         label=f"Pays — mars 2026 (OCHA) · "
         f"{rep['phase3plus_people']/1e6:.2f} M",
@@ -226,7 +225,7 @@ def make_figures(ts, adm2_geo, adm1_geo):
         color="#7a0000",
     )
     ax.set_ylim(0, None)
-    ax.set_xlim(min(ph_year.index.min(), piv.index.min()) - 0.6, 2028.6)
+    ax.set_xlim(min(natl_ph_y.index.min(), piv.index.min()) - 0.6, 2028.6)
     ax.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(1.0))
     ax.xaxis.set_major_locator(mpl.ticker.MultipleLocator(2))
     ax.set_xlabel("Année")
@@ -237,7 +236,7 @@ def make_figures(ts, adm2_geo, adm1_geo):
         fontweight="bold",
         loc="left",
     )
-    ax.legend(loc="upper left", framealpha=0.9, fontsize=7.5)
+    ax.legend(loc="upper left", framealpha=0.9, fontsize=7, ncol=2)
     _save(fig, "lean_overview")
 
     # --- 2. national phase composition at the lean-season peak ------------
@@ -646,22 +645,21 @@ a{{color:var(--accent-dk);}}
   <p class="sub">On suit la <b>projection de soudure (juin–août)</b> de chaque
   cycle CH — pic annuel d'insécurité alimentaire et métrique rapportée par
   défaut (FAO, GRFC, OCHA), précisément la fenêtre que le cadre d'AA cherche à
-  anticiper. La <b>zone du cadre</b> (rouge) est <b>systématiquement plus
-  touchée</b> que la moyenne nationale, et l'écart se creuse depuis 2022. Côté
-  national, le CH n'analyse <b>jamais</b> la soudure en cours : elle est
-  <i>toujours</i> projetée — deux fois, à long terme (analyse nov.) puis
+  anticiper. La <b>zone du cadre</b> (traits tiretés) est <b>systématiquement
+  plus touchée</b> que la moyenne nationale (traits pleins), et l'écart se
+  creuse depuis 2022. Le CH n'analyse <b>jamais</b> la soudure en cours : elle
+  est <i>toujours</i> projetée — deux fois, à long terme (analyse nov.) puis
   affinée à court terme (analyse mars) — jamais observée. La seule lecture
   <i>observée</i> est le creux de post-récolte (sep–déc), qui mesure la reprise
   après récolte, pas la soudure : il n'existe pas de vérité-terrain CH pour la
-  soudure. Le cercle creux relié par un prolongement pointillé = projection
-  court terme {rep['analysis']} (OCHA), pas encore dans le jeu de données
-  CH.</p>
+  soudure. La projection court terme {rep['analysis']} (OCHA), pas encore dans
+  le jeu de données CH, est tracée en pointillé.</p>
   <figure>{_img('lean_overview', 'Soudure zone AA vs pays')}
-  <figcaption>Part de population en phase 3+ à la soudure. Rouge = zone d'AA ;
-  orange = pays soudure court terme (mars) ; gris = pays soudure long terme
-  (nov.) ; vert pointillé = pays post-récolte sep–déc (observé) ; cercle creux
-  + pointillé = mars 2026 (OCHA, provisoire, % sur population
-  totale).</figcaption></figure>
+  <figcaption>Part de population en phase 3+ à la soudure. Couleur = série
+  (vert = post-récolte observé, gris = soudure long terme (nov.), orange =
+  soudure court terme (mars)) ; style = géographie (trait plein = pays, tireté
+  = zone d'AA). Pointillé orange + cercle creux = mars 2026 (OCHA, provisoire,
+  % sur population totale).</figcaption></figure>
 </section>
 <section><h2>2. Composition nationale par phase (soudure)</h2>
   <p class="sub">Décomposition de la population par phase CH à chaque soudure
