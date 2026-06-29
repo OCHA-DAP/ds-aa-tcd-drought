@@ -11,6 +11,7 @@ Refresh the data first with:
 """
 
 import base64
+import json
 import os
 
 import matplotlib as mpl
@@ -110,134 +111,11 @@ def make_figures(ts, adm2_geo, adm1_geo):
     adm2_geo["adm2_key"] = _norm_pcode(adm2_geo["ADM2_PCODE"])
     aoi_pcode = set(ts[ts["is_aoi"]]["ADM2_PCODE"])  # heatmap row labels
     aoi_key = set(ts[ts["is_aoi"]]["adm2_key"])  # geometry boundaries
-    rep = ipc.LATEST_REPORTED
     # CH publishes, twice a year, a lean-season (Jun–Aug) PROJECTION — the
     # annual peak and the standard headline metric — and a post-harvest
     # (Sep–Dec) "current" reading — the annual trough. Plotting one season per
     # line avoids the seasonal sawtooth that comes from mixing them.
     lean = ts[ts["reference_label"] == "Jun-Aug"]
-    ph = ts[ts["reference_label"] == "Sep-Dec"]
-    natl_ph = ipc.aggregate(ph)
-
-    # --- 1. lean-season overview: AOI vs national, observed vs projected -
-    # Colour = series (green = post-harvest observed, grey = long-lead
-    # forecast, orange = short-lead forecast); line style = geography
-    # (solid = pays, tireté = zone d'AA). The lean season is always PROJECTED
-    # (twice, long & short lead), never observed; the only observed reading is
-    # the post-harvest trough. The March 2026 OCHA projection is dotted.
-    full = ipc.load_ch_full()
-    GREEN, ORANGE = "#6b8e23", "#b35f00"
-    piv = lean_estimates_by_lead(full).pivot(
-        index="reference_year", columns="lead", values="frac_phase35"
-    )
-    piv_aoi = lean_estimates_by_lead(full, aoi_only=True, min_areas=15).pivot(
-        index="reference_year", columns="lead", values="frac_phase35"
-    )
-
-    def _by_year(g):
-        g = g.copy()
-        g.index = g.index.year
-        return g
-
-    natl_ph_y = _by_year(natl_ph)
-    aoi_ph_y = _by_year(ipc.aggregate(ph[ph["is_aoi"]]))
-    rep_frac = rep["phase3plus_pct_total_pop"]
-    ry = rep["reference_year"]
-
-    fig, ax = plt.subplots(figsize=(11, 5.2))
-    series = [
-        (
-            natl_ph_y.index,
-            natl_ph_y["frac_phase35"],
-            GREEN,
-            "-",
-            "Pays — post-récolte (observé)",
-        ),
-        (
-            piv.index,
-            piv["long"],
-            GREY,
-            "-",
-            "Pays — soudure long terme (nov.)",
-        ),
-        (
-            piv.index,
-            piv["short"],
-            ORANGE,
-            "-",
-            "Pays — soudure court terme (mars)",
-        ),
-        (
-            aoi_ph_y.index,
-            aoi_ph_y["frac_phase35"],
-            GREEN,
-            "--",
-            "Zone d'AA — post-récolte (observé)",
-        ),
-        (
-            piv_aoi.index,
-            piv_aoi["long"],
-            GREY,
-            "--",
-            "Zone d'AA — soudure long terme (nov.)",
-        ),
-        (
-            piv_aoi.index,
-            piv_aoi["short"],
-            ORANGE,
-            "--",
-            "Zone d'AA — soudure court terme (mars)",
-        ),
-    ]
-    for x, y, c, ls, lab in series:
-        ax.plot(x, y, color=c, ls=ls, lw=2.0, marker="o", ms=3.5, label=lab)
-    # March 2026 OCHA national projection — dotted, provisional
-    short = piv["short"].dropna()
-    ax.plot(
-        [short.index.max(), ry],
-        [short.iloc[-1], rep_frac],
-        color=ORANGE,
-        lw=2.0,
-        ls=":",
-        zorder=5,
-    )
-    ax.plot(
-        ry,
-        rep_frac,
-        marker="o",
-        ms=7,
-        color=ORANGE,
-        mfc="white",
-        mec=ORANGE,
-        zorder=6,
-        label=f"Pays — mars 2026 (OCHA) · "
-        f"{rep['phase3plus_people']/1e6:.2f} M",
-    )
-    ax.annotate(
-        f"mars 2026 (OCHA)\n{rep['phase3plus_people']/1e6:.2f} M",
-        xy=(ry, rep_frac),
-        xytext=(8, 0),
-        textcoords="offset points",
-        ha="left",
-        va="center",
-        fontsize=7.5,
-        fontweight="bold",
-        color="#7a0000",
-    )
-    ax.set_ylim(0, None)
-    ax.set_xlim(min(natl_ph_y.index.min(), piv.index.min()) - 0.6, 2028.6)
-    ax.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(1.0))
-    ax.xaxis.set_major_locator(mpl.ticker.MultipleLocator(2))
-    ax.set_xlabel("Année")
-    ax.set_ylabel("Part de population en phase 3+ — soudure")
-    ax.set_title(
-        "Soudure (juin–août) — zone d'AA vs pays, observé vs projeté, "
-        "2014–2026",
-        fontweight="bold",
-        loc="left",
-    )
-    ax.legend(loc="upper left", framealpha=0.9, fontsize=7, ncol=2)
-    _save(fig, "lean_overview")
 
     # --- 2. national phase composition at the lean-season peak ------------
     nat = lean.groupby("valid_date")[
@@ -486,6 +364,141 @@ def _img(name, alt):
     )
 
 
+def _lean_series_data(ts):
+    """Per-(geography, lead/observed) lean-season series for the widget."""
+    full = ipc.load_ch_full()
+    piv = lean_estimates_by_lead(full).pivot(
+        index="reference_year", columns="lead", values="frac_phase35"
+    )
+    piv_aoi = lean_estimates_by_lead(full, aoi_only=True, min_areas=15).pivot(
+        index="reference_year", columns="lead", values="frac_phase35"
+    )
+    ph = ts[ts["reference_label"] == "Sep-Dec"]
+    natl_ph = ipc.aggregate(ph)
+    natl_ph.index = natl_ph.index.year
+    aoi_ph = ipc.aggregate(ph[ph["is_aoi"]])
+    aoi_ph.index = aoi_ph.index.year
+
+    def pts(srs):
+        return [(int(y), float(v)) for y, v in srs.dropna().items()]
+
+    return {
+        "country": {
+            "obs": pts(natl_ph["frac_phase35"]),
+            "long": pts(piv["long"]),
+            "short": pts(piv["short"]),
+        },
+        "aa": {
+            "obs": pts(aoi_ph["frac_phase35"]),
+            "long": pts(piv_aoi["long"]),
+            "short": pts(piv_aoi["short"]),
+        },
+    }
+
+
+# JS that draws the SVG from embedded data and wires the checkboxes. Visibility
+# of a line = its geography box AND its series box are both checked.
+_LEAN_JS = """
+(function(){
+  var w = document.currentScript.parentNode;
+  var d = JSON.parse(w.querySelector('.lean-data').textContent);
+  var W=900,H=470,ML=58,MR=126,MT=16,MB=42,PW=W-ML-MR,PH=H-MT-MB;
+  var COL={obs:'#6b8e23',long:'#5d6677',short:'#b35f00'};
+  var all=[],yrs=[];
+  ['country','aa'].forEach(function(g){['obs','long','short'].forEach(function(t){
+    (d[g][t]||[]).forEach(function(p){all.push(p[1]);yrs.push(p[0]);});});});
+  all.push(d.ocha[1]); yrs.push(d.ocha[0]);
+  var ymax=Math.max.apply(null,all)*1.06;
+  var xmin=Math.min.apply(null,yrs)-0.4, xmax=Math.max.apply(null,yrs)+0.4;
+  function sx(y){return ML+(y-xmin)/(xmax-xmin)*PW;}
+  function sy(v){return MT+(1-v/ymax)*PH;}
+  var NS='http://www.w3.org/2000/svg';
+  function el(n,a){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);return e;}
+  var svg=el('svg',{viewBox:'0 0 '+W+' '+H,class:'leansvg'});
+  for(var t=0;t<=ymax+1e-9;t+=0.05){
+    svg.appendChild(el('line',{x1:ML,y1:sy(t),x2:ML+PW,y2:sy(t),stroke:'#e8e8e8'}));
+    var yl=el('text',{x:ML-8,y:sy(t)+3,'text-anchor':'end',class:'ax'});
+    yl.textContent=Math.round(t*100)+'%'; svg.appendChild(yl);
+  }
+  var y0=Math.ceil(Math.min.apply(null,yrs)); if(y0%2)y0++;
+  for(var yr=y0; yr<=Math.max.apply(null,yrs); yr+=2){
+    var xl=el('text',{x:sx(yr),y:MT+PH+18,'text-anchor':'middle',class:'ax'});
+    xl.textContent=yr; svg.appendChild(xl);
+  }
+  function line(pts,color,dash,cls){
+    var g=el('g',{class:cls});
+    var pl=el('polyline',{points:pts.map(function(p){return sx(p[0])+','+sy(p[1]);}).join(' '),fill:'none',stroke:color,'stroke-width':2});
+    if(dash)pl.setAttribute('stroke-dasharray',dash); g.appendChild(pl);
+    pts.forEach(function(p){g.appendChild(el('circle',{cx:sx(p[0]),cy:sy(p[1]),r:2.5,fill:color}));});
+    svg.appendChild(g); return g;
+  }
+  ['country','aa'].forEach(function(geo){
+    var dash=geo==='aa'?'6,4':'';
+    ['obs','long','short'].forEach(function(t){
+      if((d[geo][t]||[]).length) line(d[geo][t],COL[t],dash,'ser geo-'+geo+' typ-'+t);
+    });
+  });
+  // OCHA dotted (country, court terme, provisional)
+  var last=d.country.short[d.country.short.length-1];
+  var go=line([last,d.ocha],'#b35f00','2,3','ser geo-country typ-ocha');
+  go.appendChild(el('circle',{cx:sx(d.ocha[0]),cy:sy(d.ocha[1]),r:4.5,fill:'white',stroke:'#b35f00','stroke-width':2}));
+  var o1=el('text',{x:sx(d.ocha[0])+9,y:sy(d.ocha[1])-2,class:'ocha'}); o1.textContent='mars 2026 (OCHA)';
+  var o2=el('text',{x:sx(d.ocha[0])+9,y:sy(d.ocha[1])+9,class:'ocha'}); o2.textContent=d.ocha_label;
+  go.appendChild(o1); go.appendChild(o2);
+  var yl=el('text',{x:ML,y:11,class:'ylab'}); yl.textContent='Part en phase 3+ — soudure';
+  svg.appendChild(yl);
+  w.querySelector('.lean-plot').appendChild(svg);
+  function up(){
+    var s={}; w.querySelectorAll('input[data-k]').forEach(function(i){s[i.dataset.k]=i.checked;});
+    w.querySelectorAll('.ser').forEach(function(g){
+      var geo=(g.classList.contains('geo-country')&&s['geo-country'])||(g.classList.contains('geo-aa')&&s['geo-aa']);
+      var ty=(g.classList.contains('typ-obs')&&s['typ-obs'])||(g.classList.contains('typ-long')&&s['typ-long'])||(g.classList.contains('typ-short')&&s['typ-short'])||(g.classList.contains('typ-ocha')&&s['typ-ocha']);
+      g.style.display=(geo&&ty)?'':'none';
+    });
+  }
+  w.querySelectorAll('input[data-k]').forEach(function(i){i.addEventListener('change',up);}); up();
+})();
+"""
+
+
+def _lean_overview_widget(ts):
+    rep = ipc.LATEST_REPORTED
+    data = _lean_series_data(ts)
+    data["ocha"] = [rep["reference_year"], rep["phase3plus_pct_total_pop"]]
+    data["ocha_label"] = f"{rep['phase3plus_people'] / 1e6:.2f} M"
+    payload = json.dumps(data)
+    controls = (
+        '<div class="ctrls">'
+        "<fieldset><legend>Couverture</legend>"
+        '<label><input type="checkbox" data-k="geo-country" checked>'
+        '<span class="sw line"></span>Pays entier</label>'
+        '<label><input type="checkbox" data-k="geo-aa">'
+        '<span class="sw line dash"></span>Zone d\'AA</label>'
+        "</fieldset>"
+        "<fieldset><legend>Type</legend>"
+        '<label><input type="checkbox" data-k="typ-obs" checked>'
+        '<span class="sw" style="background:#6b8e23"></span>'
+        "Post-récolte (observé)</label>"
+        '<label><input type="checkbox" data-k="typ-long" checked>'
+        '<span class="sw" style="background:#5d6677"></span>'
+        "Soudure long terme (nov.)</label>"
+        '<label><input type="checkbox" data-k="typ-short" checked>'
+        '<span class="sw" style="background:#b35f00"></span>'
+        "Soudure court terme (mars)</label>"
+        '<label><input type="checkbox" data-k="typ-ocha" checked>'
+        '<span class="sw dot"></span>Mars 2026 (OCHA)</label>'
+        "</fieldset></div>"
+    )
+    return (
+        '<div class="leanwidget">'
+        + controls
+        + '<div class="lean-plot"></div>'
+        + f'<script type="application/json" class="lean-data">{payload}</script>'
+        + f"<script>{_LEAN_JS}</script>"
+        + "</div>"
+    )
+
+
 def build_html(ts, s):
     rep = ipc.LATEST_REPORTED
     latest = pd.Timestamp(s["latest_period"]).strftime("%b %Y")
@@ -561,6 +574,27 @@ figure{{margin:0;background:var(--card);border:1px solid var(--line);
 figure img{{width:100%;height:auto;display:block;min-width:520px;}}
 figure figcaption{{color:var(--muted);font-size:.82rem;margin-top:10px;
   padding:0 4px;}}
+.leanwidget{{background:var(--card);border:1px solid var(--line);
+  border-radius:12px;padding:14px 16px 8px;}}
+.leanwidget .leansvg{{width:100%;height:auto;display:block;min-width:520px;}}
+.leansvg .ax{{font-size:11px;fill:#5d6677;}}
+.leansvg .ylab{{font-size:11px;fill:#5d6677;font-weight:600;}}
+.leansvg .ocha{{font-size:11px;fill:#7a0000;font-weight:700;}}
+.lean-plot{{overflow-x:auto;}}
+.ctrls{{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:8px;}}
+.ctrls fieldset{{border:1px solid var(--line);border-radius:8px;
+  padding:4px 12px 8px;margin:0;}}
+.ctrls legend{{font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;
+  color:var(--muted);padding:0 4px;}}
+.ctrls label{{display:flex;align-items:center;gap:7px;font-size:.84rem;
+  cursor:pointer;padding:2px 0;}}
+.ctrls .sw{{width:16px;height:11px;border-radius:2px;display:inline-block;
+  flex:0 0 auto;}}
+.ctrls .sw.line{{height:0;border-radius:0;background:none;
+  border-top:3px solid #5d6677;}}
+.ctrls .sw.line.dash{{border-top-style:dashed;}}
+.ctrls .sw.dot{{background:repeating-linear-gradient(90deg,#b35f00 0 3px,
+  transparent 3px 6px);}}
 .cols{{display:grid;grid-template-columns:1fr 1fr;gap:20px;}}
 .cols h3{{font-size:1rem;margin:0 0 10px;}}
 table{{border-collapse:collapse;width:100%;background:var(--card);
@@ -654,12 +688,12 @@ a{{color:var(--accent-dk);}}
   après récolte, pas la soudure : il n'existe pas de vérité-terrain CH pour la
   soudure. La projection court terme {rep['analysis']} (OCHA), pas encore dans
   le jeu de données CH, est tracée en pointillé.</p>
-  <figure>{_img('lean_overview', 'Soudure zone AA vs pays')}
-  <figcaption>Part de population en phase 3+ à la soudure. Couleur = série
-  (vert = post-récolte observé, gris = soudure long terme (nov.), orange =
-  soudure court terme (mars)) ; style = géographie (trait plein = pays, tireté
-  = zone d'AA). Pointillé orange + cercle creux = mars 2026 (OCHA, provisoire,
-  % sur population totale).</figcaption></figure>
+  <p class="sub">Cochez/décochez pour afficher les séries — par couverture
+  (pays / zone d'AA) et par type (observé / projections). Par défaut, seules
+  les séries du pays entier sont affichées. Couleur = type, style de trait =
+  couverture (plein = pays, tireté = zone d'AA), pointillé = mars 2026
+  (OCHA, provisoire, % sur population totale).</p>
+  {_lean_overview_widget(ts)}
 </section>
 <section><h2>2. Composition nationale par phase (soudure)</h2>
   <p class="sub">Décomposition de la population par phase CH à chaque soudure

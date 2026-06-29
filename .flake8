@@ -1,2 +1,4 @@
 [flake8]
 extend-ignore = E203
+per-file-ignores =
+    analysis/ipc_ch_evolution/generate_report.py: E501
