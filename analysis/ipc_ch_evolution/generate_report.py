@@ -150,26 +150,38 @@ def make_figures(ts, adm2_geo, adm1_geo):
         alpha=0.08,
         interpolate=True,
     )
+    # March 2026 OCHA figure (not yet in the CH dataset): dashed provisional
+    # revision of the national 2026 point
     rep_frac = rep["phase3plus_pct_total_pop"]
+    natl_last = natl_lean["frac_phase35"].iloc[-1]
+    ax.plot(
+        [rep["valid_date"], rep["valid_date"]],
+        [natl_last, rep_frac],
+        color="#7a0000",
+        lw=1.6,
+        ls=(0, (4, 2)),
+        zorder=5,
+    )
     ax.plot(
         rep["valid_date"],
         rep_frac,
-        marker="*",
-        ms=20,
-        color="#111",
-        mfc="#ffd24d",
-        mec="#111",
+        marker="o",
+        ms=6,
+        color="#7a0000",
+        mfc="white",
+        mec="#7a0000",
         zorder=6,
         label=f"{rep['analysis']} (OCHA) · "
         f"{rep['phase3plus_people']/1e6:.2f} M",
     )
     ax.annotate(
-        f"{rep['phase3plus_people']/1e6:.2f} M\n({rep_frac*100:.1f} %)",
+        f"{rep['analysis']} (OCHA)\n"
+        f"{rep['phase3plus_people']/1e6:.2f} M ({rep_frac*100:.1f} %)",
         xy=(rep["valid_date"], rep_frac),
-        xytext=(-2, 16),
+        xytext=(-8, 12),
         textcoords="offset points",
         ha="right",
-        fontsize=8.5,
+        fontsize=8,
         fontweight="bold",
         color="#7a0000",
     )
@@ -242,19 +254,44 @@ def make_figures(ts, adm2_geo, adm1_geo):
         label="Soudure — projection court terme (analyse mars)",
         zorder=4,
     )
+    # 2026 short-lead = March 2026 OCHA figure (not yet in the dataset):
+    # dashed/provisional short-lead point with a revision connector
+    ry = rep["reference_year"]
+    rf = rep["phase3plus_pct_total_pop"]
+    if ry in piv.index and not pd.isna(piv.loc[ry, "long"]):
+        ax.plot(
+            [ry, ry],
+            [piv.loc[ry, "long"], rf],
+            color="#7a0000",
+            lw=1.6,
+            ls=(0, (4, 2)),
+            zorder=5,
+        )
     ax.plot(
-        rep["reference_year"],
-        rep["phase3plus_pct_total_pop"],
-        marker="*",
-        ms=20,
-        color="#111",
-        mfc="#ffd24d",
-        mec="#111",
+        ry,
+        rf,
+        marker="o",
+        ms=7,
+        color="#b35f00",
+        mfc="white",
+        mec="#b35f00",
         zorder=6,
         label=f"Soudure {rep['analysis']} (OCHA) · "
         f"{rep['phase3plus_people']/1e6:.2f} M",
     )
+    ax.annotate(
+        f"mars 2026 (OCHA)\n{rep['phase3plus_people']/1e6:.2f} M",
+        xy=(ry, rf),
+        xytext=(8, 0),
+        textcoords="offset points",
+        ha="left",
+        va="center",
+        fontsize=8,
+        fontweight="bold",
+        color="#7a0000",
+    )
     ax.set_ylim(0, None)
+    ax.set_xlim(min(ph_year.index.min(), piv.index.min()) - 0.6, 2028.6)
     ax.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(1.0))
     ax.xaxis.set_major_locator(mpl.ticker.MultipleLocator(2))
     ax.set_xlabel("Année")
@@ -677,13 +714,14 @@ a{{color:var(--accent-dk);}}
   le cadre d'AA cherche à anticiper. Un point par an évite les « dents de
   scie » dues au mélange des saisons. La zone du cadre (22 départements
   sahéliens) est <b>systématiquement plus touchée</b> que la moyenne nationale,
-  et l'écart se creuse depuis 2022. L'étoile marque la projection
+  et l'écart se creuse depuis 2022. Le point pointillé marque la projection
   {rep['analysis']} rapportée par OCHA (non encore intégrée au jeu de données
   CH).</p>
   <figure>{_img('natl_vs_aoi', 'Phase 3+ zone AA vs national, soudure')}
   <figcaption>Part de population en phase 3+ à la soudure ; rouge = zone d'AA,
-  gris = pays entier. ★ = projection mars 2026 (OCHA, % sur population totale ;
-  les séries CH sont en % de la population analysée).</figcaption></figure>
+  gris = pays entier. Cercle creux + trait pointillé = projection mars 2026
+  (OCHA, % sur population totale ; les séries CH sont en % de la population
+  analysée).</figcaption></figure>
 </section>
 <section><h2>2. Anatomie du signal national — observé vs projeté</h2>
   <p class="sub">Le CH n'analyse <b>jamais</b> la soudure en cours : la
@@ -696,14 +734,14 @@ a{{color:var(--accent-dk);}}
   post-récolte observé) et la <b>révision
   de la prévision</b> (mars passe le plus souvent au-dessus de novembre). Le
   creux observé ne mesure pas la soudure elle-même mais la reprise qui suit la
-  récolte — il n'existe pas de vérité-terrain CH pour la soudure. L'étoile =
-  projection court terme mars 2026 (OCHA), pas encore dans le jeu de données
-  CH.</p>
+  récolte — il n'existe pas de vérité-terrain CH pour la soudure. Le cercle
+  creux relié par un trait pointillé = projection court terme mars 2026 (OCHA),
+  pas encore dans le jeu de données CH.</p>
   <figure>{_img('national_anatomy', 'Signal CH national observé vs projeté')}
   <figcaption>National. Vert pointillé = post-récolte sep–déc (observé) ;
   gris = soudure projection long terme (nov.) ; orange = soudure projection
-  court terme (mars) ; trait vertical gris = ampleur de la
-  révision.</figcaption></figure>
+  court terme (mars) ; trait vertical gris = ampleur de la révision ; cercle
+  creux + pointillé rouge = mars 2026 (OCHA, provisoire).</figcaption></figure>
 </section>
 <section><h2>3. Composition nationale par phase (soudure)</h2>
   <p class="sub">Décomposition de la population par phase CH à chaque soudure
