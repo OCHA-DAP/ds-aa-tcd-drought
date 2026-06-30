@@ -171,12 +171,15 @@ def make_figures(ts, adm2_geo, adm1_geo):
     piv = piv.sort_values(["_aoi", "_mean"], ascending=[False, False])
     order = piv.index
     mat = piv.drop(columns=["_mean", "_aoi"])
-    fig, ax = plt.subplots(figsize=(13, 14))
+    fig, ax = plt.subplots(figsize=(13, 11.5))
     im = ax.imshow(mat.values, aspect="auto", cmap=P3CMAP, vmin=0, vmax=0.5)
+    col_labels = [d.strftime("%b %Y") for d in mat.columns]
     ax.set_xticks(range(len(mat.columns)))
-    ax.set_xticklabels(
-        [d.strftime("%b %Y") for d in mat.columns], rotation=90, fontsize=6.5
-    )
+    ax.set_xticklabels(col_labels, rotation=90, fontsize=6.5)
+    # mirror the time axis on top so it stays readable down the tall heatmap
+    secax = ax.secondary_xaxis("top")
+    secax.set_xticks(range(len(mat.columns)))
+    secax.set_xticklabels(col_labels, rotation=90, fontsize=6.5)
     ax.set_yticks(range(len(mat)))
     ax.set_yticklabels(
         [
@@ -225,8 +228,9 @@ def make_figures(ts, adm2_geo, adm1_geo):
             )
         a.set_title(prov, fontweight="bold", fontsize=10)
         a.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(1.0))
-        a.xaxis.set_major_locator(mdates.YearLocator(2))
+        a.xaxis.set_major_locator(mdates.YearLocator(1))
         a.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+        a.tick_params(axis="x", labelrotation=90, labelsize=6.5)
         a.legend(fontsize=6.5, loc="upper left")
     # explicit shared y-limit with headroom so peak departments aren't clipped
     axs[0].set_ylim(0, aoi_ts["frac_phase35"].max() * 1.08)
@@ -420,8 +424,8 @@ _LEAN_JS = """
     var yl=el('text',{x:ML-8,y:sy(t)+3,'text-anchor':'end',class:'ax'});
     yl.textContent=Math.round(t*100)+'%'; svg.appendChild(yl);
   }
-  var y0=Math.ceil(Math.min.apply(null,yrs)); if(y0%2)y0++;
-  for(var yr=y0; yr<=Math.max.apply(null,yrs); yr+=2){
+  var y0=Math.ceil(Math.min.apply(null,yrs));
+  for(var yr=y0; yr<=Math.max.apply(null,yrs); yr+=1){
     var xl=el('text',{x:sx(yr),y:MT+PH+18,'text-anchor':'middle',class:'ax'});
     xl.textContent=yr; svg.appendChild(xl);
   }
