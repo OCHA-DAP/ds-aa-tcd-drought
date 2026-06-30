@@ -173,6 +173,7 @@ def make_figures(ts, adm2_geo, adm1_geo):
     mat = piv.drop(columns=["_mean", "_aoi"])
     fig, ax = plt.subplots(figsize=(13, 11.5))
     im = ax.imshow(mat.values, aspect="auto", cmap=P3CMAP, vmin=0, vmax=0.5)
+    ax.grid(False)  # kill the default major grid (it slices through cells)
     col_labels = [d.strftime("%b %Y") for d in mat.columns]
     ax.set_xticks(range(len(mat.columns)))
     ax.set_xticklabels(col_labels, rotation=90, fontsize=6.5)
@@ -180,6 +181,7 @@ def make_figures(ts, adm2_geo, adm1_geo):
     secax = ax.secondary_xaxis("top")
     secax.set_xticks(range(len(mat.columns)))
     secax.set_xticklabels(col_labels, rotation=90, fontsize=6.5)
+    secax.grid(False)
     ax.set_yticks(range(len(mat)))
     ax.set_yticklabels(
         [
