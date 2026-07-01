@@ -37,11 +37,14 @@ from analysis.ipc_ch_evolution import generate_report
 ## Refresh data (optional)
 
 Pull the latest consolidated CH file from HDX, mirror raw to blob, and write the
-processed Chad ADM2 time series back to blob. Only needed when a new CH round is
-published on HDX.
+processed Chad ADM2 time series back to blob. This also folds in any
+OCHA-shared workbooks not yet on HDX (see `ipc.OCHA_CH_WORKBOOKS`, e.g. the
+May 2026 analysis under `raw/ipc/ocha/`). Only needed when a new CH round is
+published or shared.
 
 ```python
-# ipc.refresh()
+# ipc.refresh()          # HDX + OCHA workbooks
+# ipc.process_ch()       # reprocess from the already-mirrored raw files
 ```
 
 ## Load processed time series
@@ -79,11 +82,14 @@ Nov 2020, so it is used here purely to validate the most recent projection.
 ipc.crosscheck_latest_with_api(ts)
 ```
 
-## Most recent reported analysis (not yet in the CH dataset)
+## Most recent analysis — CH May 2026
 
-The March 2026 CH analysis reported by OCHA is newer than anything published to
-the IPC API / HDX. Its headline figures are kept in `ipc.LATEST_REPORTED` and
-overlaid on the historical record in the report.
+The May 2026 CH analysis (current Mar–May 2026 + projected Jun–Aug 2026) is
+newer than anything on the IPC API / HDX. The official CH workbook shared by
+OCHA Chad is mirrored to `raw/ipc/ocha/` and folded into the time series, so it
+appears directly in every figure. Its headline national figures — verified
+against the workbook (3.18 M / 17.5 %; six provinces hold 1.45 M ≈ 46 %) — are
+also kept in `ipc.LATEST_REPORTED` for the report callout.
 
 ```python
 ipc.LATEST_REPORTED

@@ -8,13 +8,15 @@ derived and stored alongside it.
 
 The IPC API (https://api.ipcinfo.org) carries the same recent rounds but only
 back to November 2020, so it is used here purely as a cross-check on the latest
-projection, not as the historical backbone. See ``crosscheck_latest_with_api``
-below.
+HDX-published projection (November 2025), not as the historical backbone. See
+``crosscheck_latest_with_api`` below.
 
-The most recent published CH analysis (as of this writing, November 2025)
-projects the June–August 2026 lean season. A newer round (March 2026) has been
-reported by OCHA but is not yet in the CH dataset (API or HDX); its headline
-figures are captured in ``LATEST_REPORTED`` for reference/overlay.
+The most recent round is the **May 2026** CH analysis (current Mar–May 2026 +
+projected Jun–Aug 2026 lean season). It is not yet on HDX/API, so the official
+workbook shared by OCHA Chad is mirrored to
+``raw/ipc/ocha/`` and folded into the processed full table + ADM2 time series
+by :func:`build_ocha_ch_rows` / :func:`process_ch`. Its headline national
+figures are also captured in ``LATEST_REPORTED`` for the report callout.
 """
 
 import io
@@ -50,21 +52,23 @@ def _raw_blob(filename: str) -> str:
     return f"{blob_utils.PROJECT_PREFIX}/raw/ipc/{filename}"
 
 
-# Headline figures from the most recent CH analysis as quoted by the user from
-# an OCHA Chad source. NB: the exact figures (3.18M / 17.5% / 18.6M) could not
-# be located in any verifiable public OCHA document (the March-April 2026
-# Humanitarian Bulletin does NOT contain them); the precise source is
-# UNCONFIRMED. Treat as a reported, not-yet-verified overlay.
+# Headline figures from the most recent (May 2026) CH analysis, VERIFIED
+# against the official CH workbook shared by OCHA Chad (mirrored to
+# ``raw/ipc/ocha/``). The projected Jun–Aug 2026 total is 3,176,885 people =
+# 17.5% of the 18,171,281 analysed population; the six provinces below hold
+# 1.45M (46%, "nearly half") of that burden — matching the OCHA narrative.
+# These now come from real per-département data folded into the time series;
+# this dict is kept for the report callout / narrative.
 LATEST_REPORTED = {
-    "analysis": "Cadre Harmonisé mars 2026",
+    "analysis": "Cadre Harmonisé mai 2026",
     "reference_label": "Jun-Aug",
     "reference_year": 2026,
     "valid_date": pd.Timestamp("2026-07-01"),
-    "phase3plus_people": 3_180_000,
+    "phase3plus_people": 3_176_885,
     "phase3plus_pct_total_pop": 0.175,
-    "total_population": 18_600_000,
+    "total_population": 18_171_281,
     "phase3plus_people_2025_lean": 3_000_000,
-    "concentration_people": 1_400_000,
+    "concentration_people": 1_446_024,
     "concentration_provinces": [
         "Logone Occidental",
         "Ouaddaï",
@@ -73,12 +77,60 @@ LATEST_REPORTED = {
         "Lac",
         "Tandjilé",
     ],
-    "source": "OCHA Tchad (analyse CH mars 2026 — source à confirmer)",
-    "source_url": "https://reports.unocha.org/en/country/chad/",
+    "source": "Analyse Cadre Harmonisé Tchad, mai 2026 (fichier officiel CH)",
+    "source_url": "https://www.ipcinfo.org/ch/",
     "note": (
-        "Non publié dans le jeu de données CH (API IPC / HDX) au moment de "
-        "l'analyse ; pourcentage rapporté sur la population totale estimée."
+        "Analyse CH de mai 2026 (courante mars–mai, projetée juin–août) ; "
+        "pas encore publiée sur HDX/API IPC au moment de l'analyse. Chiffres "
+        "vérifiés à partir du classeur CH officiel."
     ),
+}
+
+# ------------------------------------------------------------ OCHA workbooks
+# CH analyses shared directly by OCHA Chad that are not yet on HDX. Each entry
+# describes one analysis so its per-département rows can be parsed into the
+# same schema as the HDX consolidated file and folded into the processed data.
+OCHA_CH_WORKBOOKS = [
+    {
+        "blob": (
+            f"{blob_utils.PROJECT_PREFIX}/raw/ipc/ocha/"
+            "Copie de Tchad_Analyse CH mai 2026_Pop locale_revu_CT_VF.xlsx"
+        ),
+        "sheet": "Tchad-mai26",
+        "reference_year": 2026,
+        "exercise_year": 2026,
+        "exercise_label": "Jan-May",  # analysis conducted in May 2026
+        "cols": {
+            "adm1_name": 1,
+            "adm2_name": 2,
+            "adm2_pcod2": 3,
+            "population": 5,
+            # per-phase population blocks (0-based column indices)
+            "current": {
+                "phase1": 13,
+                "phase2": 14,
+                "phase3": 15,
+                "phase4": 16,
+                "phase5": 17,
+                "phase35": 18,
+            },
+            "projected": {
+                "phase1": 25,
+                "phase2": 26,
+                "phase3": 27,
+                "phase4": 28,
+                "phase5": 29,
+                "phase35": 30,
+            },
+        },
+    },
+]
+
+# CH situation → (reference_label, chtype). "current" is the Mar–May reading;
+# "projected" is the Jun–Aug lean-season projection.
+_OCHA_SITUATIONS = {
+    "current": ("Jan-May", "current"),
+    "projected": ("Jun-Aug", "projected"),
 }
 
 
@@ -114,6 +166,42 @@ def download_ch_from_hdx(
             f"-> {blob_name}"
         )
     return blob_name
+
+
+def build_ocha_ch_rows(stage: Literal["prod", "dev"] = "dev") -> pd.DataFrame:
+    """Parse OCHA-shared CH workbooks into HDX-consolidated-file schema.
+
+    Each workbook holds one département per row with a current (Mar–May) and a
+    projected (Jun–Aug) situation. Both are emitted as separate rows so they
+    slot straight into the same processing as the HDX file.
+    """
+    frames = []
+    for wb in OCHA_CH_WORKBOOKS:
+        raw = blob_utils._load_blob_data(wb["blob"], stage=stage)
+        d = pd.read_excel(io.BytesIO(raw), sheet_name=wb["sheet"], header=None)
+        c = wb["cols"]
+        code = d[c["adm2_pcod2"]].astype("string")
+        d = d[code.str.match(r"^TD\d+$", na=False)].copy()
+        base = {
+            "adm0_pcod3": ISO3,
+            "adm1_name": d[c["adm1_name"]].values,
+            "adm2_name": d[c["adm2_name"]].values,
+            "adm2_pcod2": d[c["adm2_pcod2"]].values,
+            "population": d[c["population"]].astype(float).values,
+            "reference_year": wb["reference_year"],
+            "exercise_year": wb["exercise_year"],
+            "exercise_label": wb["exercise_label"],
+        }
+        for situ, (ref_label, chtype) in _OCHA_SITUATIONS.items():
+            row = dict(base)
+            row["reference_label"] = ref_label
+            row["chtype"] = chtype
+            for ph, col in c[situ].items():
+                row[ph] = d[col].astype(float).values
+            frames.append(pd.DataFrame(row))
+    if not frames:
+        return pd.DataFrame()
+    return pd.concat(frames, ignore_index=True)
 
 
 # ----------------------------------------------------------------- process
@@ -200,6 +288,31 @@ def process_ch(
     raw = blob_utils._load_blob_data(raw_blob_name, stage=stage)
     df = pd.read_excel(io.BytesIO(raw))
     tcd = df[df["adm0_pcod3"] == ISO3].copy()
+    # fold in OCHA-shared analyses not yet on HDX (e.g. May 2026). HDX rows are
+    # kept preferentially if the same analysis later appears there.
+    ocha = build_ocha_ch_rows(stage=stage)
+    if not ocha.empty:
+        # canonical département/province names from the HDX backbone, so OCHA
+        # rows inherit consistent labels (the two sources disagree on the
+        # spelling of a few provinces and on the province of geocodes TD1402 /
+        # TD2102); the geometry join uses the numeric pcode, not these labels.
+        nm = (
+            tcd.dropna(subset=["adm2_pcod2"])
+            .drop_duplicates("adm2_pcod2")
+            .set_index("adm2_pcod2")
+        )
+        tcd = pd.concat([tcd, ocha], ignore_index=True)
+        for col in ["adm1_name", "adm2_name"]:
+            tcd[col] = tcd["adm2_pcod2"].map(nm[col]).fillna(tcd[col])
+        key = [
+            "adm2_pcod2",
+            "reference_year",
+            "reference_label",
+            "exercise_year",
+            "exercise_label",
+            "chtype",
+        ]
+        tcd = tcd.drop_duplicates(key, keep="first")
     tcd = _add_phase_fractions(tcd)
     blob_utils.upload_parquet_to_blob(tcd, PROC_FULL_BLOB, stage=stage)
     ts = build_adm2_timeseries(tcd)
@@ -274,13 +387,23 @@ def load_ipc_api_population(iso2: str = "TD") -> list:
 def crosscheck_latest_with_api(
     ts: pd.DataFrame | None = None, iso2: str = "TD"
 ) -> dict:
-    """Compare the latest projected national phase-3+ total: HDX vs IPC API.
+    """Compare the latest HDX-published projection against the IPC API.
+
+    Validates the HDX backbone, so the HDX side uses the most recent
+    **long-lead** Jun–Aug projection (the November analysis, ``exercise_label``
+    = "Sep-Dec") — which is what the API currently serves as its latest — not
+    the newer OCHA May analysis, which is not yet on the API.
 
     Returns a dict with both totals and their absolute difference (in people).
     """
-    if ts is None:
-        ts = load_adm2_timeseries()
-    hdx_p35 = aggregate(ts)["phase35"].iloc[-1]
+    full = load_ch_full()
+    lean = full[
+        (full["reference_label"] == "Jun-Aug")
+        & (full["exercise_label"] == "Sep-Dec")
+        & full["adm2_pcod2"].notnull()
+    ]
+    yr = lean["reference_year"].max()
+    hdx_p35 = lean[lean["reference_year"] == yr]["phase35"].sum()
 
     pop = load_ipc_api_population(iso2)
     latest = max(pop, key=lambda a: a["id"])

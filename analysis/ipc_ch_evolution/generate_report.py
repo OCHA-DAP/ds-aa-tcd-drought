@@ -1,9 +1,10 @@
 """Generate the Chad CH/IPC evolution report (figures + self-contained HTML).
 
 Pulls the processed ADM2 time series and boundaries from blob via the project
-data layer, builds the figures, overlays the latest OCHA-reported (March 2026)
-national figure on the historical record, and writes a GitHub-Pages-ready page
-to ``docs/ipc_ch_evolution/index.html``.
+data layer, builds the figures, and writes a GitHub-Pages-ready page to
+``docs/ipc_ch_evolution/index.html``. The most recent round (CH May 2026,
+projecting the Jun–Aug 2026 lean season) is folded into the time series by
+``src.datasources.ipc`` and so appears directly in every figure.
 
 Run from the repo root:  python analysis/ipc_ch_evolution/generate_report.py
 Refresh the data first with:
@@ -23,6 +24,7 @@ from matplotlib.colors import LinearSegmentedColormap
 
 from src.constants import NEW_ADM2_AOI_PCODES
 from src.datasources import codab, ipc
+from src.utils import blob_utils
 
 REPO = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -67,6 +69,48 @@ RED, GREY, ACCENT = "#c80000", "#5d6677", "#e67800"
 def _save(fig, name):
     fig.savefig(f"{FIG}/{name}.png", bbox_inches="tight", facecolor="white")
     plt.close(fig)
+
+
+# official CH map images (JPG) shared by OCHA on blob, alongside the workbook
+_OCHA_MAPS = {
+    "official_current": (
+        "Tchad_Courante_Mars_Mai_2026.jpg",
+        "Carte CH officielle — situation courante (mars–mai 2026)",
+    ),
+    "official_projected": (
+        "Tchad_Projetee_Juin_Aout_2026.jpg",
+        "Carte CH officielle — situation projetée (juin–août 2026)",
+    ),
+}
+
+
+def save_official_maps(stage="dev", max_width=1500):
+    """Download the OCHA CH map JPGs from blob, downscale, write to FIG.
+
+    The originals are ~5 MB each; the page is self-contained (base64), so they
+    are resampled to a web-friendly width before embedding.
+    """
+    from io import BytesIO
+
+    from PIL import Image
+
+    for name, (fn, _) in _OCHA_MAPS.items():
+        raw = blob_utils._load_blob_data(
+            f"{blob_utils.PROJECT_PREFIX}/raw/ipc/ocha/{fn}", stage=stage
+        )
+        im = Image.open(BytesIO(raw)).convert("RGB")
+        if im.width > max_width:
+            h = round(im.height * max_width / im.width)
+            im = im.resize((max_width, h), Image.LANCZOS)
+        im.save(f"{FIG}/{name}.jpg", "JPEG", quality=82, optimize=True)
+
+
+def _img_jpg(name, alt):
+    with open(f"{FIG}/{name}.jpg", "rb") as f:
+        b64 = base64.b64encode(f.read()).decode()
+    return (
+        f'<img src="data:image/jpeg;base64,{b64}" alt="{alt}" loading="lazy">'
+    )
 
 
 def _norm_pcode(s):
@@ -413,7 +457,6 @@ _LEAN_JS = """
   var all=[],yrs=[];
   ['country','aa'].forEach(function(g){['obs','long','short'].forEach(function(t){
     (d[g][t]||[]).forEach(function(p){all.push(p[1]);yrs.push(p[0]);});});});
-  all.push(d.ocha[1]); yrs.push(d.ocha[0]);
   var ymax=Math.max.apply(null,all)*1.06;
   var xmin=Math.min.apply(null,yrs)-0.4, xmax=Math.max.apply(null,yrs)+0.4;
   function sx(y){return ML+(y-xmin)/(xmax-xmin)*PW;}
@@ -444,13 +487,16 @@ _LEAN_JS = """
       if((d[geo][t]||[]).length) line(d[geo][t],COL[t],dash,'ser geo-'+geo+' typ-'+t);
     });
   });
-  // OCHA dotted (country, court terme, provisional)
-  var last=d.country.short[d.country.short.length-1];
-  var go=line([last,d.ocha],'#b35f00','2,3','ser geo-country typ-ocha');
-  go.appendChild(el('circle',{cx:sx(d.ocha[0]),cy:sy(d.ocha[1]),r:4.5,fill:'white',stroke:'#b35f00','stroke-width':2}));
-  var o1=el('text',{x:sx(d.ocha[0])+9,y:sy(d.ocha[1])-2,class:'ocha'}); o1.textContent='mars 2026 (OCHA)';
-  var o2=el('text',{x:sx(d.ocha[0])+9,y:sy(d.ocha[1])+9,class:'ocha'}); o2.textContent=d.ocha_label;
-  go.appendChild(o1); go.appendChild(o2);
+  // annotate the latest (short-lead) country projection — CH mai 2026
+  var cs=d.country.short;
+  if(cs.length){
+    var lp=cs[cs.length-1];
+    var an=el('g',{class:'ser geo-country typ-short'});
+    an.appendChild(el('circle',{cx:sx(lp[0]),cy:sy(lp[1]),r:4.5,fill:'white',stroke:COL.short,'stroke-width':2}));
+    var o1=el('text',{x:sx(lp[0])+9,y:sy(lp[1])-2,class:'ocha'}); o1.textContent=d.latest_label;
+    var o2=el('text',{x:sx(lp[0])+9,y:sy(lp[1])+9,class:'ocha'}); o2.textContent=d.latest_value;
+    an.appendChild(o1); an.appendChild(o2); svg.appendChild(an);
+  }
   var yl=el('text',{x:ML,y:11,class:'ylab'}); yl.textContent='Part en phase 3+ — soudure';
   svg.appendChild(yl);
   w.querySelector('.lean-plot').appendChild(svg);
@@ -458,7 +504,7 @@ _LEAN_JS = """
     var s={}; w.querySelectorAll('input[data-k]').forEach(function(i){s[i.dataset.k]=i.checked;});
     w.querySelectorAll('.ser').forEach(function(g){
       var geo=(g.classList.contains('geo-country')&&s['geo-country'])||(g.classList.contains('geo-aa')&&s['geo-aa']);
-      var ty=(g.classList.contains('typ-obs')&&s['typ-obs'])||(g.classList.contains('typ-long')&&s['typ-long'])||(g.classList.contains('typ-short')&&s['typ-short'])||(g.classList.contains('typ-ocha')&&s['typ-ocha']);
+      var ty=(g.classList.contains('typ-obs')&&s['typ-obs'])||(g.classList.contains('typ-long')&&s['typ-long'])||(g.classList.contains('typ-short')&&s['typ-short']);
       g.style.display=(geo&&ty)?'':'none';
     });
   }
@@ -470,8 +516,11 @@ _LEAN_JS = """
 def _lean_overview_widget(ts):
     rep = ipc.LATEST_REPORTED
     data = _lean_series_data(ts)
-    data["ocha"] = [rep["reference_year"], rep["phase3plus_pct_total_pop"]]
-    data["ocha_label"] = f"{rep['phase3plus_people'] / 1e6:.2f} M"
+    data["latest_label"] = "CH mai 2026"
+    data["latest_value"] = (
+        f"{rep['phase3plus_people'] / 1e6:.2f} M · "
+        f"{rep['phase3plus_pct_total_pop'] * 100:.1f} %"
+    )
     payload = json.dumps(data)
     controls = (
         '<div class="ctrls">'
@@ -490,9 +539,7 @@ def _lean_overview_widget(ts):
         "Soudure long terme (nov.)</label>"
         '<label><input type="checkbox" data-k="typ-short" checked>'
         '<span class="sw" style="background:#b35f00"></span>'
-        "Soudure court terme (mars)</label>"
-        '<label><input type="checkbox" data-k="typ-ocha" checked>'
-        '<span class="sw dot"></span>Mars 2026 (OCHA)</label>'
+        "Soudure court terme (mars–mai)</label>"
         "</fieldset></div>"
     )
     return (
@@ -516,6 +563,19 @@ def build_html(ts, s):
     lean = ts[ts["reference_label"] == "Jun-Aug"]
     yr = lean["reference_year"].max()
     ll = lean[lean["reference_year"] == yr]
+
+    # November-2025 long-lead projection of the same (2026) lean season, for the
+    # forecast-revision comparison in the callout
+    full = ipc.load_ch_full()
+    long26 = full[
+        (full["reference_year"] == yr)
+        & (full["reference_label"] == "Jun-Aug")
+        & (full["exercise_label"] == "Sep-Dec")
+        & full["adm2_pcod2"].notnull()
+    ]
+    long_people = long26["phase35"].sum()
+    long_frac = long_people / long26["population"].sum()
+    conc_pct = rep["concentration_people"] / rep["phase3plus_people"] * 100
 
     def table(df):
         rows = "".join(
@@ -634,15 +694,15 @@ a{{color:var(--accent-dk);}}
   administratif le plus fin disponible (ADM2 / département) — pour le pays
   entier et la zone du cadre d'AA, avec la projection la plus récente
   rapportée.</p>
-  <div class="vintage">Source : Cadre Harmonisé (CILSS/HDX), dernière analyse
-  publiée <b>novembre 2025</b> · {s['n_departments']} départements ·
-  {s['n_periods']} périodes ({first} → {latest})</div>
+  <div class="vintage">Source : Cadre Harmonisé (CILSS/HDX + classeur CH
+  officiel), dernière analyse <b>mai 2026</b> · {s['n_departments']}
+  départements · {s['n_periods']} périodes ({first} → {latest})</div>
 </div></header>
 <div class="wrap">
 <div class="groups">
   <div class="grp aoi"><h3>Zone du cadre d'AA</h3>
     <div class="scope">{s['n_aoi']} départements ·
-      projection soudure {latest}</div>
+      projection soudure juin–août {int(yr)}</div>
     <div class="kpis">
       <div class="kpi"><div class="v">{s['aoi_p35_people']/1e6:.2f} M</div>
         <div class="l">personnes en phase 3+</div></div>
@@ -656,7 +716,7 @@ a{{color:var(--accent-dk);}}
     </div></div>
   <div class="grp cty"><h3>Pays entier</h3>
     <div class="scope">{s['n_departments']} départements ·
-      projection soudure {latest}</div>
+      projection soudure juin–août {int(yr)}</div>
     <div class="kpis">
       <div class="kpi"><div class="v">{s['cty_p35_people']/1e6:.2f} M</div>
         <div class="l">personnes en phase 3+</div></div>
@@ -669,16 +729,16 @@ a{{color:var(--accent-dk);}}
     </div></div>
 </div>
 <div class="callout">
-  <b>Projection la plus récente ({rep['analysis']}) :</b>
-  {rep['phase3plus_people']/1e6:.2f} M de personnes
-  ({rep['phase3plus_pct_total_pop']*100:.1f} % d'une population estimée à
-  {rep['total_population']/1e6:.1f} M) en phase 3+ pour la soudure juin–août
-  2026, contre ~{rep['phase3plus_people_2025_lean']/1e6:.0f} M lors de la
-  soudure 2025. Près de la moitié ({rep['concentration_people']/1e6:.1f} M) se
-  concentre dans six provinces : {provs}. Cette analyse n'est pas encore
-  publiée dans le jeu de données CH ; la dernière analyse disponible (nov.
-  2025) projetait {s['cty_p35_people']/1e6:.2f} M / {s['cty_p35_frac']*100:.1f}
-  % pour la même soudure. Source :
+  <b>Analyse la plus récente ({rep['analysis']}) :</b>
+  {s['cty_p35_people']/1e6:.2f} M de personnes
+  ({s['cty_p35_frac']*100:.1f} % de la population analysée de
+  {s['cty_pop']/1e6:.1f} M) en phase 3+ pour la soudure juin–août 2026 — le pic
+  annuel. Près de la moitié ({rep['concentration_people']/1e6:.2f} M,
+  {conc_pct:.0f} %) se concentre dans six provinces : {provs}. C'est une
+  révision <b>à la hausse</b> de la projection long terme de novembre 2025
+  ({long_people/1e6:.2f} M / {long_frac*100:.1f} %) pour la même soudure, et
+  au-dessus des ~{rep['phase3plus_people_2025_lean']/1e6:.0f} M de la soudure
+  2025. Chiffres vérifiés à partir du classeur CH officiel. Source :
   <a href="{rep['source_url']}">{rep['source']}</a>.
 </div>
 <section><h2>1. Soudure — zone d'AA vs pays, observé vs projeté</h2>
@@ -689,16 +749,15 @@ a{{color:var(--accent-dk);}}
   plus touchée</b> que la moyenne nationale (traits pleins), et l'écart se
   creuse depuis 2022. Le CH n'analyse <b>jamais</b> la soudure en cours : elle
   est <i>toujours</i> projetée — deux fois, à long terme (analyse nov.) puis
-  affinée à court terme (analyse mars) — jamais observée. La seule lecture
+  affinée à court terme (analyse mars–mai) — jamais observée. La seule lecture
   <i>observée</i> est le creux de post-récolte (sep–déc), qui mesure la reprise
   après récolte, pas la soudure : il n'existe pas de vérité-terrain CH pour la
-  soudure. La projection court terme {rep['analysis']} (OCHA), pas encore dans
-  le jeu de données CH, est tracée en pointillé.</p>
+  soudure. Le dernier point court terme est l'analyse {rep['analysis']}
+  (3,18 M / 17,5 % projetés pour juin–août 2026).</p>
   <p class="sub">Cochez/décochez pour afficher les séries — par couverture
   (pays / zone d'AA) et par type (observé / projections). Par défaut, seules
   les séries du pays entier sont affichées. Couleur = type, style de trait =
-  couverture (plein = pays, tireté = zone d'AA), pointillé = mars 2026
-  (OCHA, provisoire, % sur population totale).</p>
+  couverture (plein = pays, tireté = zone d'AA).</p>
   {_lean_overview_widget(ts)}
 </section>
 <section><h2>2. Composition nationale par phase (soudure)</h2>
@@ -731,10 +790,21 @@ a{{color:var(--accent-dk);}}
   <figure>{_img('maps', 'Cartes soudure')}
   <figcaption>Échelle commune 0–50 %. Gris = non évalué.</figcaption></figure>
   <figure style="margin-top:16px">{_img('latest_map', 'Carte récente')}
-  <figcaption>Projection la plus récente du jeu de données CH.</figcaption>
+  <figcaption>Projection la plus récente du jeu de données CH (analyse mai
+  2026, par département).</figcaption>
   </figure>
+  <p class="sub" style="margin-top:22px">Cartes officielles du Cadre Harmonisé
+  (analyse mai 2026) telles que diffusées — situation courante (mars–mai) et
+  projetée (juin–août 2026).</p>
+  <div class="cols">
+    <figure>{_img_jpg('official_current', _OCHA_MAPS['official_current'][1])}
+    <figcaption>{_OCHA_MAPS['official_current'][1]}.</figcaption></figure>
+    <figure>{_img_jpg('official_projected',
+      _OCHA_MAPS['official_projected'][1])}
+    <figcaption>{_OCHA_MAPS['official_projected'][1]}.</figcaption></figure>
+  </div>
 </section>
-<section><h2>6. Départements les plus touchés — soudure {latest}</h2>
+<section><h2>6. Départements les plus touchés — soudure juin–août {int(yr)}</h2>
   <p class="sub">Classement par part de population en phase 3+. ★ = zone du
   cadre d'AA.</p>
   <div class="cols">
@@ -744,11 +814,13 @@ a{{color:var(--accent-dk);}}
 </section>
 <section><div class="note"><h3>Méthodologie &amp; provenance</h3><ul>
   <li><b>Source</b> : fichier consolidé CH/IPC (Afrique de l'Ouest et centrale)
-  sur HDX, filtré sur le Tchad. HDX couvre 2014→présent et sert de référence ;
-  l'API IPC ne remonte qu'à nov. 2020.</li>
-  <li><b>Recoupement API IPC</b> : projection nationale juin–août 2026 — HDX
-  {cc['hdx_phase3plus']/1e6:.3f} M vs API IPC {cc['api_phase3plus']/1e6:.3f} M
-  (écart {cc['diff_people']:.0f} pers.).</li>
+  sur HDX, filtré sur le Tchad (2014→présent, référence). La dernière analyse
+  (<b>mai 2026</b>), pas encore sur HDX, provient du classeur CH officiel
+  partagé par OCHA Tchad et est intégrée à la série. L'API IPC ne remonte qu'à
+  nov. 2020.</li>
+  <li><b>Recoupement API IPC</b> : projection nationale long terme (nov. 2025)
+  juin–août 2026 — HDX {cc['hdx_phase3plus']/1e6:.3f} M vs API IPC
+  {cc['api_phase3plus']/1e6:.3f} M (écart {cc['diff_people']:.0f} pers.).</li>
   <li><b>Niveau admin</b> : ADM2 (département) — niveau le plus fin du CH pour
   le Tchad.</li>
   <li><b>Série</b> : une estimation par (département × période), l'observé
@@ -766,8 +838,9 @@ a{{color:var(--accent-dk);}}
   <li><b>Blob</b> (<code>projects</code>, dev) :
   <code>ds-aa-tcd-drought/processed/ipc/tcd_ch_adm2_timeseries.parquet</code>.</li>
 </ul></div></section>
-<footer>Cadre Harmonisé nov. 2025 (HDX, recoupé API IPC) + projection mars 2026
-  (OCHA) · projet <code>ds-aa-tcd-drought</code></footer>
+<footer>Cadre Harmonisé — historique HDX (recoupé API IPC) + analyse mai 2026
+  (classeur CH officiel, OCHA Tchad) · projet
+  <code>ds-aa-tcd-drought</code></footer>
 </div></body></html>"""
     with open(f"{DOCS}/index.html", "w") as f:
         f.write(html + "\n")
@@ -779,6 +852,7 @@ def main():
     adm2_geo = codab.load_codab_from_blob(admin_level=2)
     adm1_geo = codab.load_codab_from_blob(admin_level=1)
     make_figures(ts, adm2_geo, adm1_geo)
+    save_official_maps()
     s = compute_summary(ts)
     path = build_html(ts, s)
     sz = os.path.getsize(path) / 1e6
