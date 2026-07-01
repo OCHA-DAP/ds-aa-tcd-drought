@@ -372,6 +372,64 @@ def make_figures(ts, adm2_geo, adm1_geo):
     ax.axis("off")
     _save(fig, "latest_map")
 
+    # --- 7. soudure 2026: long-lead (Nov) vs short-lead (May) -------------
+    # both projections of the SAME lean season live in the full table (the
+    # deduped time series keeps only the latest); pull them straight from it
+    full = ipc.load_ch_full()
+    l26 = full[
+        (full["reference_year"] == 2026)
+        & (full["reference_label"] == "Jun-Aug")
+        & full["adm2_pcod2"].notnull()
+    ].copy()
+    l26["adm2_key"] = _norm_pcode(l26["adm2_pcod2"])
+    panels = [
+        ("Sep-Dec", "Long terme — analyse nov. 2025"),
+        ("Jan-May", "Court terme — analyse mai 2026"),
+    ]
+    fig, axs = plt.subplots(1, 2, figsize=(15, 8))
+    for ax, (exl, title) in zip(axs, panels):
+        g = l26[l26["exercise_label"] == exl]
+        p35 = g["phase35"].sum()
+        frac = p35 / g["population"].sum()
+        m = adm2_geo.merge(
+            g[["adm2_key", "frac_phase35"]], on="adm2_key", how="left"
+        )
+        m.plot(
+            column="frac_phase35",
+            cmap=P3CMAP,
+            vmin=0,
+            vmax=0.5,
+            ax=ax,
+            edgecolor="#cccccc",
+            linewidth=0.3,
+            missing_kwds={
+                "color": "#f2f2f2",
+                "edgecolor": "#cccccc",
+                "linewidth": 0.2,
+            },
+        )
+        adm2_geo[adm2_geo["adm2_key"].isin(aoi_key)].boundary.plot(
+            ax=ax, color="#1f1f1f", linewidth=0.7
+        )
+        adm1_geo.boundary.plot(ax=ax, color="#999999", linewidth=0.3)
+        ax.set_title(
+            f"{title}\n{p35 / 1e6:.2f} M · {frac * 100:.1f} % en phase 3+",
+            fontsize=11,
+            fontweight="bold",
+        )
+        ax.axis("off")
+    sm = plt.cm.ScalarMappable(cmap=P3CMAP, norm=plt.Normalize(0, 0.5))
+    cb = fig.colorbar(sm, ax=axs, shrink=0.5, pad=0.01)
+    cb.set_label("Part en phase 3+")
+    cb.ax.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(1.0))
+    fig.suptitle(
+        "Soudure juin–août 2026 — révision de la projection CH par "
+        "département (contour noir = zone d'AA)",
+        fontweight="bold",
+        fontsize=13,
+    )
+    _save(fig, "revision_maps")
+
 
 def compute_summary(ts):
     natl, aoi = ipc.aggregate(ts), ipc.aggregate(ts[ts["is_aoi"]])
@@ -785,8 +843,18 @@ a{{color:var(--accent-dk);}}
   département.</figcaption></figure>
 </section>
 <section><h2>5. Cartographie de la soudure (juin–août)</h2>
-  <p class="sub">Projection CH de la soudure sur les huit dernières années.
-  Contour noir = zone d'AA.</p>
+  <p class="sub">Révision de la projection pour la soudure 2026 : l'analyse
+  long terme de novembre 2025 ({long_people/1e6:.2f} M / {long_frac*100:.1f} %)
+  face à l'analyse court terme de mai 2026
+  ({s['cty_p35_people']/1e6:.2f} M / {s['cty_p35_frac']*100:.1f} %), même
+  échelle 0–50 %. Le CH révise la soudure <b>à la hausse</b> à mesure qu'elle
+  approche.</p>
+  <figure>{_img('revision_maps', 'Cartes révision soudure 2026 nov vs mai')}
+  <figcaption>Gauche : projection long terme (analyse nov. 2025). Droite :
+  projection court terme (analyse mai 2026). Contour noir = zone d'AA ; gris =
+  non évalué.</figcaption></figure>
+  <p class="sub" style="margin-top:22px">Projection CH de la soudure sur les
+  huit dernières années. Contour noir = zone d'AA.</p>
   <figure>{_img('maps', 'Cartes soudure')}
   <figcaption>Échelle commune 0–50 %. Gris = non évalué.</figcaption></figure>
   <figure style="margin-top:16px">{_img('latest_map', 'Carte récente')}
