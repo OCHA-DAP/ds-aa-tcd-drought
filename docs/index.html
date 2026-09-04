@@ -1,7 +1,81 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8">
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ds-aa-tcd-drought · reports</title>
-<meta http-equiv="refresh" content="0; url=./ipc_ch_evolution/">
-</head><body>
-<p>Redirecting to <a href="./ipc_ch_evolution/">Chad CH/IPC evolution report</a>…</p>
-</body></html>
+<style>
+:root { color-scheme: light; --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink-2:#52514e;
+  --muted:#898781; --grid:#e1e0d9; --border:rgba(11,11,11,.10); --accent:#b34a00; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme:dark;
+  --page:#0d0d0d; --surface:#1a1a19; --ink:#fff; --ink-2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --border:rgba(255,255,255,.12); --accent:#f59a4a; } }
+:root[data-theme="dark"] { color-scheme:dark; --page:#0d0d0d; --surface:#1a1a19; --ink:#fff;
+  --ink-2:#c3c2b7; --muted:#898781; --grid:#2c2c2a; --border:rgba(255,255,255,.12); --accent:#f59a4a; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--page); color:var(--ink);
+  font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif; }
+main { max-width:900px; margin:0 auto; padding:40px 20px 64px; }
+h1 { font-size:1.5rem; margin:0 0 4px; }
+.sub { color:var(--ink-2); margin:0 0 8px; }
+.repo { font-size:.85rem; color:var(--muted); margin:0 0 28px; }
+.repo a { color:var(--accent); }
+h2 { font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted);
+  margin:32px 0 10px; font-weight:600; }
+ul { list-style:none; padding:0; margin:0; display:grid; gap:12px; }
+li { margin:0; }
+a.card { display:block; background:var(--surface); border:1px solid var(--border);
+  border-radius:10px; padding:14px 18px; text-decoration:none; color:inherit; }
+a.card:hover { border-color:var(--accent); }
+a.card .t { font-weight:650; color:var(--accent); font-size:1.02rem; }
+a.card .d { color:var(--ink-2); font-size:.9rem; margin-top:3px; }
+a.card .m { color:var(--muted); font-size:.78rem; margin-top:6px; }
+.lang { display:inline-block; border:1px solid var(--border); border-radius:4px;
+  padding:0 5px; font-size:.72rem; color:var(--muted); margin-left:6px; vertical-align:2px; }
+footer { margin-top:40px; padding-top:14px; border-top:1px solid var(--grid);
+  font-size:.82rem; color:var(--muted); }
+footer a { color:var(--accent); }
+</style>
+</head>
+<body>
+<main>
+<h1>Chad anticipatory action — drought</h1>
+<p class="sub">Analyses and monitoring products for the Chad AA drought framework, published by the
+OCHA Centre for Humanitarian Data science team.</p>
+<p class="repo">Source: <a href="https://github.com/OCHA-DAP/ds-aa-tcd-drought">OCHA-DAP/ds-aa-tcd-drought</a></p>
+
+<h2>Humanitarian planning</h2>
+<ul>
+<li><a class="card" href="./hnrp_2027_secheresse/">
+  <div class="t">HNRP 2027 — drought-risk index by département<span class="lang">FR / EN</span></div>
+  <div class="d">Cadre Harmonisé, FAO ASI and GeoSahel biomass (both detrended) combined into a 0–1
+    index for the 70 départements, for the 2027 shock analysis. Interactive map, year and indicator
+    explorer, time series, and the updated Excel workbook.</div>
+  <div class="m">Updated September 2026</div></a></li>
+<li><a class="card" href="./ipc_ch_evolution/">
+  <div class="t">Cadre Harmonisé / IPC evolution by département<span class="lang">FR</span></div>
+  <div class="d">Food-insecurity phase 3+ population and share for every Chad département,
+    2014 to the latest analysis, with the seasonal cycle and the anticipatory-action area of interest.</div>
+  <div class="m">Updated July 2026</div></a></li>
+</ul>
+
+<h2>Window 3 (biomass) — 2026 season</h2>
+<ul>
+<li><a class="card" href="./w3_diapos_2026/">
+  <div class="t">Window 3 slides — trigger and 2026 season tracking<span class="lang">FR</span></div>
+  <div class="d">Click-through deck explaining the biomass trigger and tracking the 2026 season
+    dekad by dekad, with a printable PDF.</div>
+  <div class="m">Updated August 2026</div></a></li>
+<li><a class="card" href="./biomasse_check_2026/">
+  <div class="t">Unofficial mid-season Window 3 check<span class="lang">EN</span></div>
+  <div class="d">Trend-adjusted biomass anomaly for the area of interest against the 84.5% threshold,
+    with the full 1999 to 2026 record and the framework backtest. Unofficial: the official check
+    is made on dekad 24.</div>
+  <div class="m">Updated August 2026</div></a></li>
+</ul>
+
+<footer>Data sources are named on each page. Figures on the Window 3 check page are unofficial
+unless stated otherwise.</footer>
+</main>
+</body>
+</html>

@@ -744,6 +744,7 @@ a{{color:var(--accent-dk);}}
 @media (max-width:720px){{.groups,.cols{{grid-template-columns:1fr;
   margin-top:-40px;}} header h1{{font-size:1.6rem;}}}}
 </style></head><body>
+<style>.homelink{{display:inline-block;margin:14px 0 0 0;font:14px/1.4 system-ui,-apple-system,sans-serif;color:#52514e;text-decoration:none;border:1px solid rgba(11,11,11,.18);border-radius:6px;padding:3px 10px;background:#fcfcfb}}@media (prefers-color-scheme:dark){{.homelink{{color:#c3c2b7;background:#1a1a19;border-color:rgba(255,255,255,.18)}}}}</style><a class="homelink" href="../">&larr; ds-aa-tcd-drought &middot; rapports</a>
 <header><div class="wrap">
   <div class="kicker">Tchad · Action anticipatoire sécheresse</div>
   <h1>Évolution de l'insécurité alimentaire CH/IPC<br>
