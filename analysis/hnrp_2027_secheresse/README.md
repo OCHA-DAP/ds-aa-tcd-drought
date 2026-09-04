@@ -28,6 +28,7 @@ l.columns = ["ADM1_FR", "ADM1_PCODE", "ADM2_FR", "ADM2_PCODE", "Portee"]
 l.dropna(subset=["ADM2_PCODE"]).to_csv("work/sheet_adm2.csv", index=False)
 PY
 .venv/bin/python $A/build_indicators.py $W  # -> work/indicators.csv
+.venv/bin/python $A/build_timeseries.py $W  # -> work/indicators_by_year.csv (explorer)
 .venv/bin/python $A/inject_xlsx.py $W/hnrp.xlsx $W/hnrp_v2.xlsx $W/indicators.csv
 .venv/bin/python $A/gen_page.py $W docs/hnrp_2027_secheresse
 ```
@@ -37,3 +38,8 @@ through openpyxl, which would drop the slicers, pivot caches and the Power Pivot
 data model the workbook carries. The new sheet's scores, index, rank, category
 and binary indicator are live formulas reading the weights and thresholds in
 row 3; the Recap sheet gets four INDEX/MATCH columns (AI–AL).
+
+The page is bilingual (FR/EN toggle), colours the map by category, and carries an
+explorer (single year 1999–2026 or a consolidated range, worst-year or mean, any
+subset of the four indicators) and a per-département time-series chart, all
+computed in the browser from `indicateurs_par_annee_adm2.csv` embedded in the page.
