@@ -37,7 +37,10 @@ TREND_Y0, TREND_Y1 = (
     1999,
     2024,
 )  # trend-fit / baseline period (same as the AA framework's W3 construct)
-WINDOW = (2024, 2026)
+WINDOW = (
+    2024,
+    2025,
+)  # complete seasons only; 2026 is still running (dekad 23) and stays as context
 WEIGHTS = {"score_ch": 0.4, "score_asi": 0.3, "score_bio": 0.3}
 
 
@@ -218,22 +221,22 @@ ty = pd.DataFrame(long)
 ty.loc[ty.ADM1_FR.isin(SAHARA), ["asi", "asi_raw", "bio", "bio_raw"]] = np.nan
 ty.to_csv("indicators_by_year.csv", index=False)
 
-# ---------------- consolidated 2024-2026 indicators ----------------
+# ---------------- consolidated 2024-2025 indicators (2026 kept as context) ----------------
 y0, y1 = WINDOW
 w = ty[ty.year.between(y0, y1)].groupby("ADM2_PCODE")
 cons = pd.DataFrame(
     {
-        "ch_p3_pct_max_2024_2026": w.ch.max(),
+        "ch_p3_pct_max_2024_2025": w.ch.max(),
         "asi_2024": ty[ty.year == 2024].set_index("ADM2_PCODE").asi,
         "asi_2025": ty[ty.year == 2025].set_index("ADM2_PCODE").asi,
         "asi_2026": ty[ty.year == 2026].set_index("ADM2_PCODE").asi,
-        "asi_max_2024_2026": w.asi.max(),
-        "asi_raw_max_2024_2026": w.asi_raw.max(),
+        "asi_max_2024_2025": w.asi.max(),
+        "asi_raw_max_2024_2025": w.asi_raw.max(),
         "bio_2024": ty[ty.year == 2024].set_index("ADM2_PCODE").bio,
         "bio_2025": ty[ty.year == 2025].set_index("ADM2_PCODE").bio,
         "bio_2026": ty[ty.year == 2026].set_index("ADM2_PCODE").bio,
-        "bio_min_2024_2026": w.bio.min(),
-        "bio_raw_min_2024_2026": w.bio_raw.min(),
+        "bio_min_2024_2025": w.bio.min(),
+        "bio_raw_min_2024_2025": w.bio_raw.min(),
     }
 )
 m = m.merge(cons, left_on="ADM2_PCODE", right_index=True, how="left")
@@ -285,9 +288,9 @@ ch = pd.DataFrame(
 m = m.merge(ch, left_on="pcode_ch", right_index=True, how="left")
 
 # ---------------- scores + index ----------------
-m["score_ch"] = clip((m.ch_p3_pct_max_2024_2026 - 10) / 30)
-m["score_asi"] = clip(m.asi_max_2024_2026 / 40)
-m["score_bio"] = clip((100 - m.bio_min_2024_2026) / 50)
+m["score_ch"] = clip((m.ch_p3_pct_max_2024_2025 - 10) / 30)
+m["score_asi"] = clip(m.asi_max_2024_2025 / 40)
+m["score_bio"] = clip((100 - m.bio_min_2024_2025) / 50)
 for c in ["score_asi", "score_bio"]:
     m.loc[sah, c] = 0.0
 m["zone_saharienne"] = np.where(sah, "Oui", "Non")
@@ -317,7 +320,7 @@ for _, r in m.iterrows():
         n.append(
             "Zone saharienne : ASI et biomasse non applicables (scores aléa = 0)"
         )
-    if pd.isna(r.ch_p3_pct_max_2024_2026):
+    if pd.isna(r.ch_p3_pct_max_2024_2025):
         n.append("Non couvert par le Cadre Harmonisé (indice sans CH)")
     if r.nom_fichier != r.ADM2_FR:
         n.append(f"Orthographe fichier HNRP : {r.nom_fichier}")
@@ -332,11 +335,11 @@ m.to_csv("indicators.csv", index=False)
 cols = [
     "ADM1_FR",
     "ADM2_FR",
-    "ch_p3_pct_max_2024_2026",
-    "asi_raw_max_2024_2026",
-    "asi_max_2024_2026",
-    "bio_raw_min_2024_2026",
-    "bio_min_2024_2026",
+    "ch_p3_pct_max_2024_2025",
+    "asi_raw_max_2024_2025",
+    "asi_max_2024_2025",
+    "bio_raw_min_2024_2025",
+    "bio_min_2024_2025",
     "score_ch",
     "score_asi",
     "score_bio",

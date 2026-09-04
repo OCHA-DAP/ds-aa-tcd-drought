@@ -5,10 +5,11 @@ composite index requested for the Chad HNRP 2027 shock-analysis workbook,
 writes them into a copy of that workbook, and generates the write-up page at
 <https://ocha-dap.github.io/ds-aa-tcd-drought/hnrp_2027_secheresse/>.
 
-Three pillars over 2024–2026, worst year of each:
+Three pillars over 2024–2025 (the two most recent complete seasons),
+worst of the two:
 
 - **Cadre Harmonisé** phase 3+ share (HDX + the OCHA Chad May-2026 workbook,
-  via `src/datasources/ipc.py`), max over the 8 analyses since 2024.
+  via `src/datasources/ipc.py`), max over the analyses of 2024 and 2025.
 - **FAO ASIS ASI**, mean of the dekads 1 June – 21 August, **detrended**
   (additive, 1999–2024 fit, re-centred on the period mean, clipped 0–100).
   Published on 28 GAUL-2015 units, area-weighted onto COD ADM2.
@@ -53,3 +54,10 @@ explorer (single year 1999–2026 or a consolidated range, worst-year or mean, a
 subset of the three indicators) and a per-département time-series chart, all
 computed in the browser from the per-year table embedded in the page. Raw and
 detrended ASI/biomass are both shipped, in the sheet and in the explorer.
+
+The index window is `WINDOW` in `build_indicators.py` and the `$C$3:$K$3` parameter
+row in the generated sheet. It excludes 2026 because that season is incomplete
+(ASI and biomass stop at dekad 23; the June–August CH is a projection). Note the
+consequence: 2024 and 2025 were good pastoral years in the Sahel, so the current
+index is driven mostly by the CH and does not show the 2026 drought. The page
+explorer recomputes with 2026 included in one click.

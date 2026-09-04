@@ -92,31 +92,47 @@ COLS = [  # header, field, kind
     ("CH Ph3+ (%) projeté juin–août 2026", "ch_p3_pct_proj_2026", "1dp"),
     ("CH Ph3+ (pers.) projeté juin–août 2026", "ch_p3_pop_proj_2026", "int"),
     (
-        "CH Ph3+ (%) max 2024–2026 (8 analyses)",
-        "ch_p3_pct_max_2024_2026",
+        "CH Ph3+ (%) max 2024–2025 (dans l'indice)",
+        "ch_p3_pct_max_2024_2025",
         "1dp",
     ),
     ("CH phase zone max 2024–2026", "ch_phase_max_2024_2026", "int"),
     ("Score CH (0–1)", "score_ch", "f2"),
     ("ASI détendancié 2024 (% cultures stressées)", "asi_2024", "1dp"),
     ("ASI détendancié 2025 (%)", "asi_2025", "1dp"),
-    ("ASI détendancié 2026 à date (%)", "asi_2026", "1dp"),
-    ("ASI détendancié max 2024–2026", "asi_max_2024_2026", "f1"),
+    (
+        "ASI détendancié max 2024–2025 (dans l'indice)",
+        "asi_max_2024_2025",
+        "f1",
+    ),
     ("Score ASI (0–1)", "score_asi", "f2"),
     (
-        "ASI brut max 2024–2026 (avant correction)",
-        "asi_raw_max_2024_2026",
+        "ASI détendancié 2026 à date — hors indice (saison en cours)",
+        "asi_2026",
+        "1dp",
+    ),
+    (
+        "ASI brut max 2024–2025 (avant correction)",
+        "asi_raw_max_2024_2025",
         "1dp",
     ),
     ("Tendance ASI 1999–2024 (points/an)", "asi_trend_pts_per_yr", "2dp"),
     ("Biomasse détendanciée 2024 (% de la tendance)", "bio_2024", "1dp"),
     ("Biomasse détendanciée 2025 (%)", "bio_2025", "1dp"),
-    ("Biomasse détendanciée 2026 à date (%)", "bio_2026", "1dp"),
-    ("Biomasse détendanciée min 2024–2026", "bio_min_2024_2026", "f1"),
+    (
+        "Biomasse détendanciée min 2024–2025 (dans l'indice)",
+        "bio_min_2024_2025",
+        "f1",
+    ),
     ("Score biomasse (0–1)", "score_bio", "f2"),
     (
-        "Biomasse brute min 2024–2026 (% moy. 1999–2024)",
-        "bio_raw_min_2024_2026",
+        "Biomasse détendanciée 2026 à date — hors indice (saison en cours)",
+        "bio_2026",
+        "1dp",
+    ),
+    (
+        "Biomasse brute min 2024–2025 (% moy. 1999–2024)",
+        "bio_raw_min_2024_2025",
         "1dp",
     ),
     (
@@ -143,19 +159,19 @@ assert (
 LAST = L["notes"]
 C_SAH, C_CHMAX, C_SCH = (
     L["zone_saharienne"],
-    L["ch_p3_pct_max_2024_2026"],
+    L["ch_p3_pct_max_2024_2025"],
     L["score_ch"],
 )
-C_ASI0, C_ASI2, C_ASIM, C_SASI = (
+C_ASI0, C_ASI1, C_ASIM, C_SASI = (
     L["asi_2024"],
-    L["asi_2026"],
-    L["asi_max_2024_2026"],
+    L["asi_2025"],
+    L["asi_max_2024_2025"],
     L["score_asi"],
 )
-C_BIO0, C_BIO2, C_BIOM, C_SBIO = (
+C_BIO0, C_BIO1, C_BIOM, C_SBIO = (
     L["bio_2024"],
-    L["bio_2026"],
-    L["bio_min_2024_2026"],
+    L["bio_2025"],
+    L["bio_min_2024_2025"],
     L["score_bio"],
 )
 C_IDX, C_RANK, C_CAT, C_IND = (
@@ -172,14 +188,14 @@ def formula(field, r):
     if field == "score_ch":
         c = f"{C_CHMAX}{r}"
         return f'IF(ISNUMBER({c}),MIN(1,MAX(0,({c}-{P["ch_lo"]})/({P["ch_hi"]}-{P["ch_lo"]}))),"")'
-    if field == "asi_max_2024_2026":
-        rng = f"{C_ASI0}{r}:{C_ASI2}{r}"
+    if field == "asi_max_2024_2025":
+        rng = f"{C_ASI0}{r}:{C_ASI1}{r}"
         return f'IF(COUNT({rng})=0,"",MAX({rng}))'
     if field == "score_asi":
         c = f"{C_ASIM}{r}"
         return f'IF(ISNUMBER({c}),MIN(1,MAX(0,{c}/{P["asi"]})),IF({g}="Oui",0,""))'
-    if field == "bio_min_2024_2026":
-        rng = f"{C_BIO0}{r}:{C_BIO2}{r}"
+    if field == "bio_min_2024_2025":
+        rng = f"{C_BIO0}{r}:{C_BIO1}{r}"
         return f'IF(COUNT({rng})=0,"",MIN({rng}))'
     if field == "score_bio":
         c = f"{C_BIOM}{r}"
@@ -208,7 +224,7 @@ def formula(field, r):
 # ---------- new sheet XML ----------
 rows = []
 rows.append(
-    f'<row r="1">{cs("A1","Indice de risque sécheresse par département — données secondaires 2024–2026 (CH/IPC, FAO ASI et biomasse GeoSahel détendanciés)", S_TITLE)}</row>'
+    f'<row r="1">{cs("A1","Indice de risque sécheresse par département — données secondaires 2024–2025 (CH/IPC, FAO ASI et biomasse GeoSahel détendanciés)", S_TITLE)}</row>'
 )
 params = [
     ("C", "w_ch", "Poids CH", 0.4),
@@ -228,7 +244,7 @@ r3 = "".join(cn(f"{c}3", v, S_PARAM) for c, key, lab, v in params)
 rows.append(f'<row r="2" ht="30" customHeight="1">{r2}</row>')
 rows.append(f'<row r="3">{r3}</row>')
 rows.append(
-    f'<row r="4">{cs("A4","Méthode, sources et limites : https://ocha-dap.github.io/ds-aa-tcd-drought/hnrp_2027_secheresse/ — construit le 2026-09-04 (OCHA CHD Data Science). Scores : 0 = pas de signal, 1 = signal maximal ; indice = moyenne pondérée des scores disponibles. Zone saharienne : ASI/biomasse non applicables (scores aléa = 0). ASI et biomasse sont corrigés de leur tendance 1999–2024 ; les valeurs brutes figurent à côté. Vide = non disponible.", S_SUB)}</row>'
+    f'<row r="4">{cs("A4","Méthode, sources et limites : https://ocha-dap.github.io/ds-aa-tcd-drought/hnrp_2027_secheresse/ — construit le 2026-09-04 (OCHA CHD Data Science). Scores : 0 = pas de signal, 1 = signal maximal ; indice = moyenne pondérée des scores disponibles. Zone saharienne : ASI/biomasse non applicables (scores aléa = 0). ASI et biomasse sont corrigés de leur tendance 1999–2024 ; les valeurs brutes figurent à côté. L’indice ne retient que les saisons complètes 2024 et 2025 ; les valeurs 2026, encore partielles (arrêtées à la décade 23 / 21 août), sont fournies pour information et n’entrent pas dans le calcul. Vide = non disponible.", S_SUB)}</row>'
 )
 hdr = "".join(cs(f"{col(i+1)}5", h, S_HDR) for i, (h, f, k) in enumerate(COLS))
 rows.append(f'<row r="5" ht="78" customHeight="1">{hdr}</row>')
