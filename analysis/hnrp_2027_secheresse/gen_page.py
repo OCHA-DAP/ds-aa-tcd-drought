@@ -209,6 +209,7 @@ td.num {{ text-align:right; font-variant-numeric:tabular-nums; }}
 code {{ background:var(--grid); padding:1px 5px; border-radius:4px; font-size:.85em; }}
 .formula {{ background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-family:ui-monospace,Menlo,monospace; font-size:.85rem; overflow-x:auto; white-space:pre; }}
 .small {{ font-size:.85rem; color:var(--ink-2); }}
+.dl {{ margin:0 0 16px; font-size:.95rem; }} .dl a {{ font-weight:600; }}
 ul {{ padding-left:20px; }} li {{ margin:3px 0; }}
 .ctrl {{ margin:8px 0; font-size:.85rem; color:var(--ink-2); }} .ctrl input {{ padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--ink); }}
 </style>
@@ -223,6 +224,7 @@ ul {{ padding-left:20px; }} li {{ margin:3px 0; }}
 L'indice est un outil de <em>priorisation relative</em> entre départements, sur le même principe que les pondérations « Priorisationzone » déjà utilisées dans le classeur (scores 0–1, moyenne pondérée). La saison 2026 est en cours : les valeurs 2026 d'ASI, de biomasse et de pluie s'arrêtent au 21 août / à la décade 23 et seront révisées. Les seuils et poids sont des choix de méthode, exposés ci-dessous et modifiables directement dans la feuille Excel (ligne 3).
 Le classeur contient déjà des impacts « catastrophe naturelle » 2022 et 2024 (inondations) : aucun indice inondation n'a été ajouté — voir la section dédiée.</div>
 
+<p class="dl"><a href="TCD_HNRP_2027_ANALYSE_DES_CHOCS_ALL_v2_secheresse.xlsx" download>⬇ Télécharger le classeur Excel mis à jour (v2_secheresse, 0,4 Mo)</a> · <a href="indice_secheresse_adm2_2026-09-04.csv" download>CSV de l'indice</a></p>
 <div class="tiles">
 <div class="tile"><div class="k">Très élevé</div><div class="v">{n_te}</div><div class="d">départements (indice ≥ 0,60)</div></div>
 <div class="tile"><div class="k">Élevé</div><div class="v">{n_e}</div><div class="d">départements (0,40 – 0,59)</div></div>
@@ -312,7 +314,7 @@ Indicateur_Sécheresse = 1 si indice ≥ 0,50 (même logique que le seuil 50 % d
 
 <h2>Fichiers et reproduction</h2>
 <ul>
-<li>Classeur mis à jour : <em>TCD_HNRP 2027_ANALYSE DES CHOCS_ALL_v2_secheresse.xlsx</em> (feuille « Indice sécheresse » + colonnes AI–AL du Recap).</li>
+<li>Classeur mis à jour : <a href="TCD_HNRP_2027_ANALYSE_DES_CHOCS_ALL_v2_secheresse.xlsx" download><strong>TCD_HNRP 2027_ANALYSE DES CHOCS_ALL_v2_secheresse.xlsx</strong></a> (classeur original + feuille « Indice sécheresse » + colonnes AI–AL du Recap).</li>
 <li>Table plate : <a href="indice_secheresse_adm2_2026-09-04.csv">indice_secheresse_adm2_2026-09-04.csv</a> (toutes les colonnes de la feuille, en anglais technique).</li>
 <li>Scripts : <code>analysis/hnrp_2027_secheresse/</code> dans le dépôt <a href="https://github.com/OCHA-DAP/ds-aa-tcd-drought">ds-aa-tcd-drought</a> — <code>fetch_data.sh</code> (téléchargements FAO ASIS, GeoSahel, GAUL), <code>build_indicators.py</code> (calcul), <code>inject_xlsx.py</code> (insertion dans le classeur sans casser les segments et le modèle de données), <code>gen_page.py</code> (cette page).</li>
 <li>Contexte CH par département 2014–2026 : <a href="../ipc_ch_evolution/">rapport d'évolution CH/IPC</a>. Suivi biomasse 2026 : <a href="../biomasse_check_2026/">vérification fenêtre 3</a>.</li>
