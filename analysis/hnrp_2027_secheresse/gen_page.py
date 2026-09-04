@@ -94,12 +94,14 @@ for _, r in m.iterrows():
             s_ch=f2(r.score_ch),
             s_asi=f2(r.score_asi),
             s_bio=f2(r.score_bio),
-            s_pl=f2(r.score_pluie),
             ch_proj=f1(r.ch_p3_pct_proj_2026),
             ch_max=f1(r.ch_p3_pct_max_2024_2026),
             asi_max=f1(r.asi_max_2024_2026),
+            asi_raw=f1(r.asi_raw_max_2024_2026),
             bio_min=f1(r.bio_min_2024_2026),
-            pl_min=f1(r.pluie_min_2024_2026),
+            bio_raw=f1(r.bio_raw_min_2024_2026),
+            asi_tr=f2(r.asi_trend_pts_per_yr),
+            bio_tr=f2(r.bio_trend_pct_per_yr),
             notes="" if pd.isna(r.notes) else r.notes,
         )
     )
@@ -113,7 +115,8 @@ for pc, g in ty.groupby("ADM2_PCODE"):
             ("ch", "ch"),
             ("asi", "asi"),
             ("bio", "bio"),
-            ("pl", "pluie"),
+            ("asi_raw", "asi_raw"),
+            ("bio_raw", "bio_raw"),
         ]
     }
 DATA = json.dumps(
@@ -137,7 +140,7 @@ def catspan(c):
 
 
 top_rows = "".join(
-    f"<tr><td>{r.rang}</td><td>{html.escape(r.ADM2_FR)}</td><td>{html.escape(r.ADM1_FR)}</td><td class='num'>{r.indice_secheresse:.2f}</td><td>{catspan(r.categorie)}</td><td class='num'>{r.score_ch:.2f}</td><td class='num'>{r.score_asi:.2f}</td><td class='num'>{r.score_bio:.2f}</td><td class='num'>{r.score_pluie:.2f}</td><td>{'<span class=fr>Oui</span><span class=en>Yes</span>' if r.zone_aa=='Oui' else '<span class=fr>Non</span><span class=en>No</span>'}</td></tr>"
+    f"<tr><td>{r.rang}</td><td>{html.escape(r.ADM2_FR)}</td><td>{html.escape(r.ADM1_FR)}</td><td class='num'>{r.indice_secheresse:.2f}</td><td>{catspan(r.categorie)}</td><td class='num'>{r.score_ch:.2f}</td><td class='num'>{r.score_asi:.2f}</td><td class='num'>{r.score_bio:.2f}</td><td>{'<span class=fr>Oui</span><span class=en>Yes</span>' if r.zone_aa=='Oui' else '<span class=fr>Non</span><span class=en>No</span>'}</td></tr>"
     for _, r in m.head(10).iterrows()
 )
 
@@ -216,12 +219,12 @@ ul { padding-left:20px; } li { margin:3px 0; }
 <div class="langtoggle" role="group" aria-label="Langue / Language"><button data-l="fr" class="on">Français</button><button data-l="en">English</button></div></div>
 
 <h1><span class="fr">Tchad — HNRP 2027 : indice de risque sécheresse par département</span><span class="en">Chad — HNRP 2027: drought-risk index by département</span></h1>
-<p class="sub"><span class="fr">Données secondaires 2024–2026 (Cadre Harmonisé, FAO ASI, biomasse GeoSahel, pluie) combinées en un indice 0–1 pour les 70 départements, à verser dans la feuille « Indice sécheresse » du classeur <em>TCD_HNRP 2027_ANALYSE DES CHOCS</em>. Construit le 4 septembre 2026 par OCHA CHD Data Science.</span>
-<span class="en">Secondary data for 2024–2026 (Cadre Harmonisé, FAO ASI, GeoSahel biomass, rainfall) combined into a 0–1 index for the 70 départements, delivered as the “Indice sécheresse” sheet of the <em>TCD_HNRP 2027_ANALYSE DES CHOCS</em> workbook. Built on 4 September 2026 by OCHA CHD Data Science.</span></p>
+<p class="sub"><span class="fr">Données secondaires 2024–2026 (Cadre Harmonisé, FAO ASI et biomasse GeoSahel, ces deux dernières corrigées de leur tendance) combinées en un indice 0–1 pour les 70 départements, à verser dans la feuille « Indice sécheresse » du classeur <em>TCD_HNRP 2027_ANALYSE DES CHOCS</em>. Construit le 4 septembre 2026 par OCHA CHD Data Science.</span>
+<span class="en">Secondary data for 2024–2026 (Cadre Harmonisé, FAO ASI and GeoSahel biomass, the latter two detrended) combined into a 0–1 index for the 70 départements, delivered as the “Indice sécheresse” sheet of the <em>TCD_HNRP 2027_ANALYSE DES CHOCS</em> workbook. Built on 4 September 2026 by OCHA CHD Data Science.</span></p>
 
 <div class="banner"><strong><span class="fr">À lire avant usage</span><span class="en">Read before use</span></strong>
-<span class="fr">L'indice est un outil de <em>priorisation relative</em> entre départements, sur le même principe que les pondérations « Priorisationzone » déjà utilisées dans le classeur (scores 0–1, moyenne pondérée). La saison 2026 est en cours : les valeurs 2026 d'ASI, de biomasse et de pluie s'arrêtent au 21 août / à la décade 23 et seront révisées. Les seuils et poids sont des choix de méthode, exposés ci-dessous et modifiables directement dans la feuille Excel (ligne 3). Le classeur contient déjà des impacts « catastrophe naturelle » 2022 et 2024 (inondations) : aucun indice inondation n'a été ajouté — voir la section dédiée.</span>
-<span class="en">The index is a tool for <em>relative prioritisation</em> across départements, built on the same principle as the “Priorisationzone” weights already in the workbook (0–1 scores, weighted mean). The 2026 season is still running: the 2026 ASI, biomass and rainfall values stop at 21 August / dekad 23 and will be revised. Thresholds and weights are methodological choices, documented below and editable directly in the Excel sheet (row 3). The workbook already holds 2022 and 2024 “natural disaster” impacts (floods): no flood index was added — see the dedicated section.</span></div>
+<span class="fr">L'indice est un outil de <em>priorisation relative</em> entre départements, sur le même principe que les pondérations « Priorisationzone » déjà utilisées dans le classeur (scores 0–1, moyenne pondérée). La saison 2026 est en cours : les valeurs 2026 d'ASI et de biomasse s'arrêtent au 21 août / à la décade 23 et seront révisées. Les seuils et poids sont des choix de méthode, exposés ci-dessous et modifiables directement dans la feuille Excel (ligne 3). Le classeur contient déjà des impacts « catastrophe naturelle » 2022 et 2024 (inondations) : aucun indice inondation n'a été ajouté — voir la section dédiée.</span>
+<span class="en">The index is a tool for <em>relative prioritisation</em> across départements, built on the same principle as the “Priorisationzone” weights already in the workbook (0–1 scores, weighted mean). The 2026 season is still running: the 2026 ASI and biomass values stop at 21 August / dekad 23 and will be revised. Thresholds and weights are methodological choices, documented below and editable directly in the Excel sheet (row 3). The workbook already holds 2022 and 2024 “natural disaster” impacts (floods): no flood index was added — see the dedicated section.</span></div>
 
 <p class="dl"><a href="@@XLSX@@" download>⬇ <span class="fr">Télécharger le classeur Excel mis à jour (v2_secheresse, 0,4 Mo)</span><span class="en">Download the updated Excel workbook (v2_secheresse, 0.4 MB)</span></a> · <a href="indice_secheresse_adm2_2026-09-04.csv" download><span class="fr">CSV de l'indice</span><span class="en">Index CSV</span></a> · <a href="indicateurs_par_annee_adm2.csv" download><span class="fr">CSV par année (1999–2026)</span><span class="en">Per-year CSV (1999–2026)</span></a></p>
 
@@ -239,15 +242,15 @@ ul { padding-left:20px; } li { margin:3px 0; }
 <figcaption><span class="fr">Catégorie de l'indice sécheresse par département (COD ADM2). Traits foncés : provinces. Survoler un département pour le détail.</span><span class="en">Drought-index category by département (COD ADM2). Dark lines: provinces. Hover a département for details.</span></figcaption></figure>
 <div>
 <h3 style="margin-top:0"><span class="fr">Dix départements les plus prioritaires</span><span class="en">Ten highest-priority départements</span></h3>
-<div class="tablewrap" style="max-height:none"><table><thead><tr><th>#</th><th><span class="fr">Département</span><span class="en">Département</span></th><th>Province</th><th><span class="fr">Indice</span><span class="en">Index</span></th><th><span class="fr">Catégorie</span><span class="en">Category</span></th><th>CH</th><th>ASI</th><th><span class="fr">Biom.</span><span class="en">Biom.</span></th><th><span class="fr">Pluie</span><span class="en">Rain</span></th><th><span class="fr">Zone AA</span><span class="en">AA zone</span></th></tr></thead><tbody>@@TOP_ROWS@@</tbody></table></div>
-<p class="small"><span class="fr">Colonnes CH / ASI / Biom. / Pluie = scores 0–1 de chaque pilier. Lecture : les départements sahéliens de la zone AA (Kanem, Lac, Ouaddaï, Wadi Fira, Batha, Barh-El-Gazel) cumulent une insécurité alimentaire élevée depuis 2024 et un effondrement de la biomasse en 2026 ; les départements du sud (Logone Occidental et Oriental, Mandoul, Tandjilé) ressortent par le stress agricole (ASI) des saisons 2025 et 2026.</span>
-<span class="en">CH / ASI / Biom. / Rain columns are the 0–1 pillar scores. Reading: the Sahelian départements of the AA zone (Kanem, Lac, Ouaddaï, Wadi Fira, Batha, Barh-El-Gazel) combine high food insecurity since 2024 with a collapse of biomass in 2026; the southern départements (Logone Occidental and Oriental, Mandoul, Tandjilé) stand out for agricultural stress (ASI) in the 2025 and 2026 seasons.</span></p>
+<div class="tablewrap" style="max-height:none"><table><thead><tr><th>#</th><th><span class="fr">Département</span><span class="en">Département</span></th><th>Province</th><th><span class="fr">Indice</span><span class="en">Index</span></th><th><span class="fr">Catégorie</span><span class="en">Category</span></th><th>CH</th><th>ASI</th><th><span class="fr">Biom.</span><span class="en">Biom.</span></th><th><span class="fr">Zone AA</span><span class="en">AA zone</span></th></tr></thead><tbody>@@TOP_ROWS@@</tbody></table></div>
+<p class="small"><span class="fr">Colonnes CH / ASI / Biom. = scores 0–1 de chaque pilier. Lecture : une fois retirée la tendance au verdissement, les départements sahéliens de la zone AA (Kanem, Lac, Batha, Ouaddaï, Wadi Fira, Barh-El-Gazel) dominent le classement — insécurité alimentaire élevée depuis 2024, effondrement de la biomasse et stress cultural marqué en 2026 ; les départements du sud (Logone Occidental et Oriental, Mandoul, Tandjilé) ressortent par le seul stress agricole (ASI) des saisons 2025 et 2026.</span>
+<span class="en">CH / ASI / Biom. columns are the 0–1 pillar scores. Reading: once the greening trend is removed, the Sahelian départements of the AA zone (Kanem, Lac, Batha, Ouaddaï, Wadi Fira, Barh-El-Gazel) dominate the ranking — high food insecurity since 2024, a collapse of biomass and marked crop stress in 2026; the southern départements (Logone Occidental and Oriental, Mandoul, Tandjilé) stand out for agricultural stress (ASI) alone in the 2025 and 2026 seasons.</span></p>
 </div>
 </div>
 
 <h2><span class="fr">Explorateur : une année, ou une plage d'années, et les indicateurs de votre choix</span><span class="en">Explorer: one year, or a range of years, with the indicators of your choice</span></h2>
-<p class="small"><span class="fr">L'indice consolidé ci-dessus retient, pour chaque pilier, la <strong>pire année</strong> de 2024–2026 (maximum pour le CH et l'ASI, minimum pour la biomasse et la pluie), puis calcule les scores. L'explorateur permet de recalculer l'indice pour une seule année (1999–2026 ; le CH n'existe qu'à partir de 2014, l'indice est alors calculé sur les piliers disponibles), pour une autre plage d'années, en moyenne plutôt qu'en pire année, ou avec un sous-ensemble d'indicateurs (poids renormalisés).</span>
-<span class="en">The consolidated index above keeps, for each pillar, the <strong>worst year</strong> of 2024–2026 (maximum for CH and ASI, minimum for biomass and rainfall), then computes the scores. The explorer recomputes the index for a single year (1999–2026; CH only exists from 2014, so earlier years use the available pillars), for another year range, as an average rather than the worst year, or with a subset of indicators (weights renormalised).</span></p>
+<p class="small"><span class="fr">L'indice consolidé ci-dessus retient, pour chaque pilier, la <strong>pire année</strong> de 2024–2026 (maximum pour le CH et l'ASI, minimum pour la biomasse), puis calcule les scores. L'explorateur permet de recalculer l'indice pour une seule année (1999–2026 ; le CH n'existe qu'à partir de 2014, l'indice est alors calculé sur les piliers disponibles), pour une autre plage d'années, en moyenne plutôt qu'en pire année, ou avec un sous-ensemble d'indicateurs (poids renormalisés).</span>
+<span class="en">The consolidated index above keeps, for each pillar, the <strong>worst year</strong> of 2024–2026 (maximum for CH and ASI, minimum for biomass), then computes the scores. The explorer recomputes the index for a single year (1999–2026; CH only exists from 2014, so earlier years use the available pillars), for another year range, as an average rather than the worst year, or with a subset of indicators (weights renormalised).</span></p>
 <div class="panel">
 <fieldset><legend><span class="fr">Période</span><span class="en">Period</span></legend>
 <label><input type="radio" name="mode" value="year"> <span class="fr">Année</span><span class="en">Year</span> <select id="yr"></select></label>
@@ -257,9 +260,8 @@ ul { padding-left:20px; } li { margin:3px 0; }
 </fieldset>
 <fieldset><legend><span class="fr">Indicateurs</span><span class="en">Indicators</span></legend>
 <label><input type="checkbox" class="ind" value="ch" checked> <span class="fr">Cadre Harmonisé (Ph3+ %)</span><span class="en">Cadre Harmonisé (Ph3+ %)</span> <span class="w">× 0,4</span></label>
-<label><input type="checkbox" class="ind" value="asi" checked> <span class="fr">ASI (stress agricole)</span><span class="en">ASI (crop stress)</span> <span class="w">× 0,2</span></label>
-<label><input type="checkbox" class="ind" value="bio" checked> <span class="fr">Biomasse</span><span class="en">Biomass</span> <span class="w">× 0,2</span></label>
-<label><input type="checkbox" class="ind" value="pl" checked> <span class="fr">Pluie</span><span class="en">Rainfall</span> <span class="w">× 0,2</span></label>
+<label><input type="checkbox" class="ind" value="asi" checked> <span class="fr">ASI détendancié (stress agricole)</span><span class="en">Detrended ASI (crop stress)</span> <span class="w">× 0,3</span></label>
+<label><input type="checkbox" class="ind" value="bio" checked> <span class="fr">Biomasse détendanciée</span><span class="en">Detrended biomass</span> <span class="w">× 0,3</span></label>
 </fieldset>
 </div>
 <div class="statline" id="xstat"></div>
@@ -267,19 +269,18 @@ ul { padding-left:20px; } li { margin:3px 0; }
 <figure><svg id="map1" viewBox="0 0 @@W@@ @@H@@" role="img" aria-label="Carte explorateur"></svg><div class="legend" id="legend1"></div>
 <figcaption id="xcap"></figcaption></figure>
 <div><h3 style="margin-top:0"><span class="fr">Classement pour cette sélection</span><span class="en">Ranking for this selection</span></h3>
-<div class="tablewrap" style="max-height:520px"><table id="xtbl"><thead><tr><th>#</th><th>Département</th><th>Province</th><th><span class="fr">Indice</span><span class="en">Index</span></th><th><span class="fr">Catégorie</span><span class="en">Category</span></th><th>CH</th><th>ASI</th><th>Biom.</th><th><span class="fr">Pluie</span><span class="en">Rain</span></th></tr></thead><tbody id="xtb"></tbody></table></div>
-<p class="note"><span class="fr">Valeurs brutes des piliers pour la sélection (CH et ASI en %, biomasse et pluie en % de la normale) ; le score est calculé sur ces valeurs.</span><span class="en">Raw pillar values for the selection (CH and ASI in %, biomass and rainfall in % of normal); the score is computed on these values.</span></p></div>
+<div class="tablewrap" style="max-height:520px"><table id="xtbl"><thead><tr><th>#</th><th>Département</th><th>Province</th><th><span class="fr">Indice</span><span class="en">Index</span></th><th><span class="fr">Catégorie</span><span class="en">Category</span></th><th>CH</th><th>ASI</th><th>Biom.</th></tr></thead><tbody id="xtb"></tbody></table></div>
+<p class="note"><span class="fr">Valeurs des piliers pour la sélection (CH et ASI détendancié en %, biomasse détendanciée en % de la tendance) ; le score est calculé sur ces valeurs.</span><span class="en">Pillar values for the selection (CH and detrended ASI in %, detrended biomass in % of trend); the score is computed on these values.</span></p></div>
 </div>
 
 <h2><span class="fr">Séries temporelles par département</span><span class="en">Time series by département</span></h2>
 <div class="panel">
 <fieldset><legend><span class="fr">Variable</span><span class="en">Variable</span></legend>
-<select id="tsvar"><option value="idx"><span></span>Indice / Index</option><option value="ch">CH Ph3+ (%)</option><option value="asi">ASI (%)</option><option value="bio">Biomasse / Biomass (% normale)</option><option value="pl">Pluie / Rainfall (% normale)</option></select>
+<select id="tsvar"><option value="idx">Indice / Index</option><option value="ch">CH Ph3+ (%)</option><option value="asi">ASI détendancié / detrended (%)</option><option value="asi_raw">ASI brut / raw (%)</option><option value="bio">Biomasse détendanciée / detrended (% tendance)</option><option value="bio_raw">Biomasse brute / raw (% moyenne 1999–2024)</option></select>
 <div id="tsindwrap" style="margin-top:6px">
 <label><input type="checkbox" class="tsind" value="ch" checked> CH <span class="w">× 0,4</span></label>
-<label><input type="checkbox" class="tsind" value="asi" checked> ASI <span class="w">× 0,2</span></label>
-<label><input type="checkbox" class="tsind" value="bio" checked> <span class="fr">Biomasse</span><span class="en">Biomass</span> <span class="w">× 0,2</span></label>
-<label><input type="checkbox" class="tsind" value="pl" checked> <span class="fr">Pluie</span><span class="en">Rainfall</span> <span class="w">× 0,2</span></label></div>
+<label><input type="checkbox" class="tsind" value="asi" checked> ASI <span class="w">× 0,3</span></label>
+<label><input type="checkbox" class="tsind" value="bio" checked> <span class="fr">Biomasse</span><span class="en">Biomass</span> <span class="w">× 0,3</span></label></div>
 </fieldset>
 <fieldset><legend><span class="fr">Départements (catégorie de l'indice consolidé)</span><span class="en">Départements (consolidated-index category)</span></legend>
 <label><input type="checkbox" class="tscat" value="TE" checked> <span class="pill c-TE"><span class="fr">Très élevé</span><span class="en">Very high</span></span></label>
@@ -287,7 +288,7 @@ ul { padding-left:20px; } li { margin:3px 0; }
 <label><input type="checkbox" class="tscat" value="M"> <span class="pill c-M"><span class="fr">Modéré</span><span class="en">Moderate</span></span></label>
 <label><input type="checkbox" class="tscat" value="F"> <span class="pill c-F"><span class="fr">Faible</span><span class="en">Low</span></span></label>
 </fieldset>
-<fieldset><legend>Province</legend><select id="tsprov"><option value=""><span></span>—</option></select>
+<fieldset><legend>Province</legend><select id="tsprov"><option value="">—</option></select>
 <div style="margin-top:6px"><label><input type="checkbox" id="tsaa"> <span class="fr">zone AA seulement</span><span class="en">AA zone only</span></label></div>
 <div style="margin-top:6px"><span class="fr">Années</span><span class="en">Years</span> <select id="tsy0"></select> – <select id="tsy1"></select></div></fieldset>
 </div>
@@ -301,50 +302,48 @@ ul { padding-left:20px; } li { margin:3px 0; }
 <div class="tablewrap"><table id="tbl"><thead><tr>
 <th data-k="rang"><span class="fr">Rang</span><span class="en">Rank</span></th><th data-k="dep">Département</th><th data-k="prov">Province</th><th data-k="idx"><span class="fr">Indice</span><span class="en">Index</span></th><th data-k="cat"><span class="fr">Catégorie</span><span class="en">Category</span></th><th data-k="ind">Indic.</th><th data-k="aa"><span class="fr">Zone AA</span><span class="en">AA zone</span></th>
 <th data-k="s_ch">Score CH</th><th data-k="ch_proj"><span class="fr">CH Ph3+ % proj. 2026</span><span class="en">CH Ph3+ % proj. 2026</span></th><th data-k="ch_max">CH Ph3+ % max 24–26</th>
-<th data-k="s_asi">Score ASI</th><th data-k="asi_max">ASI max 24–26 (%)</th>
-<th data-k="s_bio"><span class="fr">Score biom.</span><span class="en">Biom. score</span></th><th data-k="bio_min">Biom. min 24–26 (%)</th>
-<th data-k="s_pl"><span class="fr">Score pluie</span><span class="en">Rain score</span></th><th data-k="pl_min"><span class="fr">Pluie min 24–26 (%)</span><span class="en">Rain min 24–26 (%)</span></th><th data-k="pop">Pop. CH 2026</th></tr></thead><tbody id="tb"></tbody></table></div>
+<th data-k="s_asi">Score ASI</th><th data-k="asi_max"><span class="fr">ASI détend. max 24–26 (%)</span><span class="en">Detr. ASI max 24–26 (%)</span></th><th data-k="asi_raw"><span class="fr">ASI brut max</span><span class="en">Raw ASI max</span></th>
+<th data-k="s_bio"><span class="fr">Score biom.</span><span class="en">Biom. score</span></th><th data-k="bio_min"><span class="fr">Biom. détend. min 24–26 (%)</span><span class="en">Detr. biom. min 24–26 (%)</span></th><th data-k="bio_raw"><span class="fr">Biom. brute min</span><span class="en">Raw biom. min</span></th><th data-k="pop">Pop. CH 2026</th></tr></thead><tbody id="tb"></tbody></table></div>
 
 <div class="fr">
 <h2>Indicateurs retenus</h2>
-<p>Quatre piliers, tous à l'échelle du département (COD ADM2, 70 unités), sur la fenêtre 2024–2026 pour rester cohérent avec la portée « données secondaires » du classeur. Un pilier « résultat » (insécurité alimentaire) et trois piliers « aléa » (cultures, pâturages, pluie) qui décrivent la sécheresse agro-pastorale elle-même.</p>
+<p>Trois piliers, tous à l'échelle du département (COD ADM2, 70 unités), sur la fenêtre 2024–2026 pour rester cohérent avec la portée « données secondaires » du classeur. Un pilier « résultat » (insécurité alimentaire) et deux piliers « aléa » (cultures, pâturages) qui décrivent la sécheresse agro-pastorale elle-même.</p>
+<p>Les deux piliers d'aléa sont <strong>corrigés de leur tendance 1999–2024</strong>. Le Sahel tchadien verdit : la biomasse progresse de 2 à 6 % de sa moyenne par an dans le Kanem, le Barh-El-Gazel et le Wadi Fira, et l'ASI y recule d'environ 1 point par an. Comparer une saison à la moyenne brute de 26 ans la ferait donc paraître moins mauvaise qu'elle ne l'est au regard de ce que les dernières années ont établi. La pluie estimée (RFE de FEWS NET) a été examinée puis écartée : elle est déjà intégrée par les deux signaux de végétation, elle n'existe que sur les anciennes unités FAO, et son retrait ne déplace que marginalement le haut du classement.</p>
 <div class="cards">
 <div class="card"><h3>1 · Cadre Harmonisé (CH/IPC)</h3><dl>
 <dt>Source</dt><dd>Fichier consolidé CH sur HDX (<code>cadre-harmonise</code>) + classeur officiel CH mai 2026 partagé par OCHA Tchad. Pipeline <code>src/datasources/ipc.py</code> de ce dépôt.</dd>
 <dt>Couverture</dt><dd>8 analyses de 2024 à 2026 : courant mars–mai et projeté juin–août de chaque cycle, plus courant oct–déc 2024 et 2025. 69 départements (N'Djaména non analysé). Série complète depuis 2014 dans l'explorateur.</dd>
 <dt>Variables</dt><dd>% de population en phase 3+ : projeté juin–août 2026 (soudure en cours), et <strong>maximum sur les 8 analyses</strong> ; phase de zone maximale (règle des 20 %) ; personnes en phase 3+.</dd>
 <dt>Pourquoi</dt><dd>Résultat humanitaire directement lié aux chocs sécheresse récents ; c'est aussi la donnée que les clusters connaissent.</dd></dl></div>
-<div class="card"><h3>2 · FAO ASI — stress agricole</h3><dl>
+<div class="card"><h3>2 · FAO ASI — stress agricole (détendancié)</h3><dl>
 <dt>Source</dt><dd>FAO GIEWS ASIS, série décadaire par unité administrative (<code>ASI_Dekad_Season1</code>, masque cultures), page pays TCD.</dd>
-<dt>Définition</dt><dd>% de la surface cultivée dont l'indice de santé de la végétation (VHI) est &lt; 35. Moyenne des décades du <strong>1er juin au 21 août</strong> de chaque année (même fenêtre pour toutes les années afin d'être comparable avec la saison 2026 en cours) ; valeur retenue = maximum 2024–2026.</dd>
+<dt>Définition</dt><dd>% de la surface cultivée dont l'indice de santé de la végétation (VHI) est &lt; 35. Moyenne des décades du <strong>1er juin au 21 août</strong> de chaque année (même fenêtre toutes les années, pour rester comparable avec la saison 2026 en cours). <strong>Correction de tendance</strong> : droite ajustée sur 1999–2024 par unité ; ASI corrigé = ASI brut − (valeur de la tendance pour l'année − moyenne 1999–2024), borné à 0–100. Valeur retenue = maximum 2024–2026 de l'ASI corrigé ; l'ASI brut figure à côté.</dd>
 <dt>Échelle</dt><dd>FAO publie sur les 28 anciens départements (GAUL 2015). Report sur les 70 départements COD par intersection surfacique (moyenne pondérée par la surface) — la valeur est donc partagée par les départements issus d'une même ancienne unité.</dd>
-<dt>Pourquoi</dt><dd>Signal « cultures » qui capte les poches sèches du sud (Logone, Mandoul, Tandjilé) invisibles dans la biomasse pastorale.</dd></dl></div>
-<div class="card"><h3>3 · Biomasse — GeoSahel / Action contre la Faim</h3><dl>
-<dt>Source</dt><dd>Couche WFS <code>Biomass:WA_BIO_ADM2_v4</code> (productivité de matière sèche DMP décadaire, 1999→décade 23 de 2026), même fournisseur que la fenêtre 3 du cadre AA sécheresse.</dd>
-<dt>Définition</dt><dd>Production cumulée des décades 10 à 23 (1er avril – 20 août) rapportée à la moyenne 1999–2024 de la même fenêtre, en % ; valeur retenue = minimum 2024–2026. Non applicable dans les provinces sahariennes (Borkou, Ennedi Est/Ouest, Tibesti : production de base quasi nulle).</dd>
-<dt>Pourquoi</dt><dd>Signal « pâturages / élevage » ; 2026 est la pire saison de la série dans la bande sahélienne (Kanem, Lac, Batha, Wadi Fira, Ouaddaï à 30–60 % de la normale).</dd></dl></div>
-<div class="card"><h3>4 · Pluie estimée (FEWS NET RFE via FAO ASIS)</h3><dl>
-<dt>Source</dt><dd>Série <code>rain_adm1_data</code> de FAO ASIS (RFE FEWS NET, masque cultures, avec normale de long terme), mêmes 28 unités GAUL reportées sur les 70 départements.</dd>
-<dt>Définition</dt><dd>Cumul du 1er juin au 21 août en % de la normale ; valeur retenue = minimum 2024–2026. Non applicable en zone saharienne.</dd>
-<dt>Pourquoi</dt><dd>Aléa météorologique brut, indépendant des masques cultures/pâturages ; confirme le déficit 2026 sur l'est et le nord (Wadi Fira, Batha Est ≈ 73–78 % de la normale).</dd></dl></div>
+<dt>Pourquoi</dt><dd>Signal « cultures », qui capte les poches sèches du sud (Logone, Mandoul, Tandjilé) invisibles dans la biomasse pastorale. Sans correction, l'ASI récent du Sahel est proche de zéro par construction — le VHI est normalisé sur un historique que le verdissement a déplacé ; corrigé, le stress 2026 du Kanem, du Batha et du Barh-El-Gazel ressort à 15–22 %.</dd></dl></div>
+<div class="card"><h3>3 · Biomasse — GeoSahel / Action contre la Faim (détendanciée)</h3><dl>
+<dt>Source</dt><dd>Couche WFS <code>Biomass:WA_BIO_ADM2_v4</code> (productivité de matière sèche DMP décadaire, 1999 → décade 23 de 2026), même fournisseur que la fenêtre 3 du cadre AA sécheresse.</dd>
+<dt>Définition</dt><dd>Production cumulée des décades 10 à 23 (1er avril – 20 août). <strong>Correction de tendance identique à celle du cadre AA</strong> : droite ajustée sur 1999–2024 par département ; biomasse corrigée = cumul de l'année / valeur attendue par la tendance pour cette année, en % (tendance plancher à 10 % de la moyenne pour éviter les divisions par une valeur quasi nulle). Valeur retenue = minimum 2024–2026 ; l'anomalie brute (en % de la moyenne 1999–2024) figure à côté. Non applicable dans les provinces sahariennes (Borkou, Ennedi Est/Ouest, Tibesti : production de base quasi nulle).</dd>
+<dt>Pourquoi</dt><dd>Signal « pâturages / élevage » ; 2026 est la pire saison de la série dans la bande sahélienne. Une fois la tendance retirée, le Kanem et le Nord Kanem tombent à 16–26 % de la production attendue, et le Batha, le Wadi Fira et le Barh-El-Gazel Nord à 35–46 %.</dd></dl></div>
 </div>
-<p class="small">Colonnes de contexte ajoutées sans entrer dans l'indice : population CH 2026, appartenance à la zone du cadre d'action anticipatoire sécheresse (7 provinces : Batha, Kanem, Lac, Wadi Fira, Barh-El-Gazel, Sila, Ouaddaï ; fenêtres 1 et 2 déclenchées les 30 avril et 9 mai 2026, fenêtre 3 en cours de vérification sur la décade 24), p-codes COD et p-codes/orthographes du classeur HNRP.</p>
+<p class="small">Colonnes de contexte ajoutées sans entrer dans l'indice : population CH 2026, ASI brut et biomasse brute (avant correction de tendance), pentes des tendances 1999–2024, appartenance à la zone du cadre d'action anticipatoire sécheresse (7 provinces : Batha, Kanem, Lac, Wadi Fira, Barh-El-Gazel, Sila, Ouaddaï ; fenêtres 1 et 2 déclenchées les 30 avril et 9 mai 2026, fenêtre 3 en cours de vérification sur la décade 24), p-codes COD et p-codes/orthographes du classeur HNRP.</p>
 
 <h2>Construction de l'indice</h2>
 <p>Chaque pilier est transformé en un <strong>score 0–1</strong> par interpolation linéaire entre deux seuils fixes (0 = pas de signal, 1 = signal maximal, bornés), puis les scores sont moyennés avec des poids. Les seuils sont absolus (pas des rangs) pour que l'indice reste comparable si l'on met à jour une seule source. La consolidation 2024–2026 retient la pire année de chaque pilier (max / min), pas la moyenne — l'explorateur permet de comparer les deux.</p>
 <div class="formula">Score CH        = clip( (CH Ph3+ max 2024–2026  − 10 %) / (40 % − 10 %) , 0, 1 )
-Score ASI       = clip(  ASI max 2024–2026 / 40 %                     , 0, 1 )
-Score biomasse  = clip( (100 % − biomasse min 2024–2026) / (100 % − 50 %) , 0, 1 )
-Score pluie     = clip( (100 % − pluie min 2024–2026)    / (100 % − 60 %) , 0, 1 )
+Score ASI       = clip(  ASI détendancié max 2024–2026 / 40 %              , 0, 1 )
+Score biomasse  = clip( (100 % − biomasse détendanciée min 2024–2026) / (100 % − 50 %) , 0, 1 )
 
-Indice sécheresse = ( 0,4·CH + 0,2·ASI + 0,2·biomasse + 0,2·pluie ) / (somme des poids des scores disponibles)
+où  ASI détendancié      = ASI brut − (tendance de l'année − moyenne 1999–2024), borné 0–100
+et  biomasse détendanciée = 100 % × cumul de l'année / valeur attendue par la tendance 1999–2024
+
+Indice sécheresse = ( 0,4·CH + 0,3·ASI + 0,3·biomasse ) / (somme des poids des scores disponibles)
 
 Catégorie : Très élevé ≥ 0,60 · Élevé 0,40–0,59 · Modéré 0,20–0,39 · Faible &lt; 0,20
 Indicateur_Sécheresse = 1 si indice ≥ 0,50 (même logique que le seuil 50 % du classeur), sinon 0</div>
 <ul>
-<li><strong>Poids</strong> : 40 % au résultat (CH), 60 % répartis également entre les trois signaux d'aléa, de façon à ce que l'indice ne soit pas une simple copie du CH mais reflète bien la sécheresse agro-pastorale 2024–2026.</li>
-<li><strong>Seuils</strong> : 10–40 % de population en phase 3+ couvre l'étendue observée (9–44 %) ; 40 % de surface cultivée stressée correspond à un stress sévère au sens FAO ; 50 % de la biomasse normale et 60 % de la pluie normale marquent les pires années de la série dans le Sahel tchadien.</li>
-<li><strong>Zone saharienne</strong> (8 départements de Borkou, Ennedi Est, Ennedi Ouest, Tibesti) : ASI, biomasse et pluie n'ont pas de sens (pas de cultures, production de base ≈ 0, anomalies pluie de plusieurs centaines de %). Les scores d'aléa y sont fixés à 0 — l'indice n'y reflète que le CH, pondéré à 0,4 — plutôt que de laisser un CH seul remonter ces départements en tête. Leur insécurité alimentaire (22–31 % en phase 3+) est bien visible dans les colonnes CH.</li>
+<li><strong>Poids</strong> : 40 % au résultat (CH), 60 % répartis également entre les deux signaux d'aléa (cultures, pâturages), de façon à ce que l'indice ne soit pas une simple copie du CH mais reflète bien la sécheresse agro-pastorale 2024–2026.</li>
+<li><strong>Seuils</strong> : 10–40 % de population en phase 3+ couvre l'étendue observée (9–44 %) ; 40 % de surface cultivée stressée correspond à un stress sévère au sens FAO ; 50 % de la biomasse attendue marque les pires années de la série dans le Sahel tchadien.</li>
+<li><strong>Zone saharienne</strong> (8 départements de Borkou, Ennedi Est, Ennedi Ouest, Tibesti) : ASI et biomasse n'ont pas de sens (pas de cultures, production de base ≈ 0). Les scores d'aléa y sont fixés à 0 — l'indice n'y reflète que le CH, pondéré à 0,4 — plutôt que de laisser un CH seul remonter ces départements en tête. Leur insécurité alimentaire (22–31 % en phase 3+) est bien visible dans les colonnes CH.</li>
 <li><strong>Données manquantes</strong> : N'Djaména n'est pas couvert par le CH ; l'indice y est calculé sur les seuls scores d'aléa (renormalisation des poids) et signalé dans la colonne Notes.</li>
 <li><strong>Pourquoi max / min sur 2024–2026</strong> : la feuille doit refléter « ce qui s'est passé récemment » ; prendre l'extrême sur les trois saisons capte un choc même s'il n'est pas dans la dernière analyse (ex. Dababa : 31 % en phase 3+ en 2024, 10 % projeté 2026). La dernière projection CH (juin–août 2026) est fournie à côté pour la lecture.</li>
 </ul>
@@ -359,8 +358,9 @@ Indicateur_Sécheresse = 1 si indice ≥ 0,50 (même logique que le seuil 50 % d
 
 <h2>Limites et points d'attention</h2>
 <ul>
-<li><strong>Saison 2026 en cours</strong> : ASI, biomasse et pluie 2026 s'arrêtent au 21 août (décade 23). Ils seront mis à jour quand la décade 24 sera publiée (vérification officielle de la fenêtre 3 du cadre AA) ; le CH de novembre 2026 pourra remplacer la projection juin–août.</li>
-<li><strong>Report des anciennes unités FAO</strong> : ASI et pluie sont publiés par FAO sur 28 unités (GAUL 2015, ≈ anciens départements). Les départements actuels d'une même ancienne unité partagent la même valeur — l'ASI ne différencie pas, par exemple, les quatre départements du Logone Occidental.</li>
+<li><strong>Saison 2026 en cours</strong> : ASI et biomasse 2026 s'arrêtent au 21 août (décade 23). Ils seront mis à jour quand la décade 24 sera publiée (vérification officielle de la fenêtre 3 du cadre AA) ; le CH de novembre 2026 pourra remplacer la projection juin–août.</li>
+<li><strong>La correction de tendance est une hypothèse</strong> : une droite sur 26 saisons est le modèle le plus simple possible. Pour la biomasse, c'est la méthode déjà retenue par le cadre AA sécheresse. Pour l'ASI, borné entre 0 et 100, la correction additive ajoute jusqu'à 15–17 points dans les unités sahéliennes où la droite descend vers zéro : c'est bien l'ordre de grandeur du biais de verdissement, mais il vaut mieux lire ASI brut et ASI corrigé côte à côte — les deux figurent dans la feuille, le tableau et l'explorateur.</li>
+<li><strong>Report des anciennes unités FAO</strong> : l'ASI est publié par FAO sur 28 unités (GAUL 2015, ≈ anciens départements). Les départements actuels d'une même ancienne unité partagent la même valeur — l'ASI ne différencie pas, par exemple, les quatre départements du Logone Occidental.</li>
 <li><strong>Biomasse au niveau département</strong> : dans les départements à faible production de base (Barh-El-Gazel Nord, Nord Kanem, Mégri, Biltine), l'anomalie relative est bruitée ; elle reste cohérente avec le signal provincial (Kanem ≈ 30 % de la normale) utilisé par le cadre AA.</li>
 <li><strong>P-codes et noms du classeur</strong> : la feuille « Listes departements inclus » intervertit les p-codes d'Abdi (COD TCD1402, Ouaddaï) et de Djourf Al Ahmar (COD TCD2102, Sila) et code Mourtcha TCD2302 (COD TCD2303). La jointure a été faite sur les noms ; les deux p-codes sont fournis dans la feuille.</li>
 <li><strong>Population</strong> : la population « CH 2026 » sert de contexte ; elle diffère des populations utilisées dans les feuilles conflit/épidémie du classeur.</li>
@@ -370,53 +370,52 @@ Indicateur_Sécheresse = 1 si indice ≥ 0,50 (même logique que le seuil 50 % d
 <h2>Fichiers et reproduction</h2>
 <ul>
 <li>Classeur mis à jour : <a href="@@XLSX@@" download><strong>TCD_HNRP 2027_ANALYSE DES CHOCS_ALL_v2_secheresse.xlsx</strong></a> (classeur original + feuille « Indice sécheresse » + colonnes AI–AL du Recap).</li>
-<li>Tables plates : <a href="indice_secheresse_adm2_2026-09-04.csv">indice_secheresse_adm2_2026-09-04.csv</a> (toutes les colonnes de la feuille) et <a href="indicateurs_par_annee_adm2.csv">indicateurs_par_annee_adm2.csv</a> (valeurs brutes des quatre piliers par département et par année, 1999–2026, utilisées par l'explorateur).</li>
-<li>Scripts : <code>analysis/hnrp_2027_secheresse/</code> dans le dépôt <a href="https://github.com/OCHA-DAP/ds-aa-tcd-drought">ds-aa-tcd-drought</a> — <code>fetch_data.sh</code> (téléchargements FAO ASIS, GeoSahel, GAUL), <code>build_indicators.py</code> et <code>build_timeseries.py</code> (calcul), <code>inject_xlsx.py</code> (insertion dans le classeur sans casser les segments et le modèle de données), <code>gen_page.py</code> (cette page).</li>
+<li>Tables plates : <a href="indice_secheresse_adm2_2026-09-04.csv">indice_secheresse_adm2_2026-09-04.csv</a> (toutes les colonnes de la feuille) et <a href="indicateurs_par_annee_adm2.csv">indicateurs_par_annee_adm2.csv</a> (valeurs des piliers par département et par année, 1999–2026, brutes et corrigées de la tendance, utilisées par l'explorateur).</li>
+<li>Scripts : <code>analysis/hnrp_2027_secheresse/</code> dans le dépôt <a href="https://github.com/OCHA-DAP/ds-aa-tcd-drought">ds-aa-tcd-drought</a> — <code>fetch_data.sh</code> (téléchargements FAO ASIS, GeoSahel, GAUL), <code>build_indicators.py</code> (calcul, y compris les tendances et la table par année), <code>inject_xlsx.py</code> (insertion dans le classeur sans casser les segments et le modèle de données), <code>gen_page.py</code> (cette page).</li>
 <li>Contexte CH par département 2014–2026 : <a href="../ipc_ch_evolution/">rapport d'évolution CH/IPC</a>. Suivi biomasse 2026 : <a href="../biomasse_check_2026/">vérification fenêtre 3</a>.</li>
 </ul>
-<p class="small">Sources : CILSS/Cadre Harmonisé via HDX et OCHA Tchad ; FAO GIEWS ASIS (ASI, RFE FEWS NET) ; Action contre la Faim / GeoSahel BioGenerator ; OCHA COD-AB Tchad. Les seuils, poids et règles d'agrégation sont ceux d'OCHA CHD Data Science et n'engagent pas ces producteurs.</p>
+<p class="small">Sources : CILSS/Cadre Harmonisé via HDX et OCHA Tchad ; FAO GIEWS ASIS (ASI) ; Action contre la Faim / GeoSahel BioGenerator ; OCHA COD-AB Tchad. Les seuils, poids et règles d'agrégation sont ceux d'OCHA CHD Data Science et n'engagent pas ces producteurs.</p>
 </div>
 
 <div class="en">
 <h2>Indicators used</h2>
-<p>Four pillars, all at département level (COD ADM2, 70 units), over the 2024–2026 window to stay consistent with the workbook's “secondary data” scope. One <em>outcome</em> pillar (food insecurity) and three <em>hazard</em> pillars (crops, pasture, rainfall) that describe the agro-pastoral drought itself.</p>
+<p>Three pillars, all at département level (COD ADM2, 70 units), over the 2024–2026 window to stay consistent with the workbook's “secondary data” scope. One <em>outcome</em> pillar (food insecurity) and two <em>hazard</em> pillars (crops, pasture) that describe the agro-pastoral drought itself.</p>
+<p>Both hazard pillars are <strong>corrected for their 1999–2024 trend</strong>. The Chadian Sahel is greening: biomass rises by 2–6% of its own mean per year in Kanem, Barh-El-Gazel and Wadi Fira, and ASI there falls by about 1 point per year. Comparing a season with the raw 26-year mean would therefore make it look less bad than it is against what recent years have established. Estimated rainfall (FEWS NET RFE) was examined and dropped: it is already integrated by the two vegetation signals, it only exists on FAO's legacy units, and removing it barely moves the top of the ranking.</p>
 <div class="cards">
 <div class="card"><h3>1 · Cadre Harmonisé (CH/IPC)</h3><dl>
 <dt>Source</dt><dd>Consolidated CH file on HDX (<code>cadre-harmonise</code>) plus the official May 2026 CH workbook shared by OCHA Chad. Pipeline <code>src/datasources/ipc.py</code> in this repository.</dd>
 <dt>Coverage</dt><dd>8 analyses from 2024 to 2026: current March–May and projected June–August of each cycle, plus current Oct–Dec 2024 and 2025. 69 départements (N'Djaména not analysed). Full series since 2014 in the explorer.</dd>
 <dt>Variables</dt><dd>Share of population in phase 3+: projected June–August 2026 (current lean season) and the <strong>maximum over the 8 analyses</strong>; maximum area phase (20% rule); people in phase 3+.</dd>
 <dt>Why</dt><dd>The humanitarian outcome most directly tied to recent drought shocks, and the dataset the clusters already know.</dd></dl></div>
-<div class="card"><h3>2 · FAO ASI — agricultural stress</h3><dl>
+<div class="card"><h3>2 · FAO ASI — agricultural stress (detrended)</h3><dl>
 <dt>Source</dt><dd>FAO GIEWS ASIS, dekadal series by administrative unit (<code>ASI_Dekad_Season1</code>, cropland mask), TCD country page.</dd>
-<dt>Definition</dt><dd>Share of cropland whose Vegetation Health Index (VHI) is below 35. Mean of the dekads from <strong>1 June to 21 August</strong> each year (same window every year so that the running 2026 season is comparable); value used = maximum over 2024–2026.</dd>
+<dt>Definition</dt><dd>Share of cropland whose Vegetation Health Index (VHI) is below 35. Mean of the dekads from <strong>1 June to 21 August</strong> each year (the same window every year, so the running 2026 season stays comparable). <strong>Trend correction</strong>: a straight line fitted over 1999–2024 per unit; adjusted ASI = raw ASI − (the trend's value for that year − the 1999–2024 mean), clipped to 0–100. Value used = the 2024–2026 maximum of the adjusted ASI; raw ASI is shown alongside.</dd>
 <dt>Scale</dt><dd>FAO publishes on the 28 former départements (GAUL 2015). Transferred to the 70 COD départements by area-weighted intersection — départements carved from the same former unit therefore share a value.</dd>
-<dt>Why</dt><dd>A crop signal that captures the dry pockets of the south (Logone, Mandoul, Tandjilé) that pastoral biomass does not see.</dd></dl></div>
-<div class="card"><h3>3 · Biomass — GeoSahel / Action contre la Faim</h3><dl>
+<dt>Why</dt><dd>A crop signal that captures the dry pockets of the south (Logone, Mandoul, Tandjilé) that pastoral biomass does not see. Without the correction, recent Sahelian ASI is near zero by construction — VHI is normalised on a history that greening has shifted; adjusted, the 2026 stress in Kanem, Batha and Barh-El-Gazel comes out at 15–22%.</dd></dl></div>
+<div class="card"><h3>3 · Biomass — GeoSahel / Action contre la Faim (detrended)</h3><dl>
 <dt>Source</dt><dd>WFS layer <code>Biomass:WA_BIO_ADM2_v4</code> (dekadal dry-matter productivity, DMP, 1999 → dekad 23 of 2026), the same provider as window 3 of the AA drought framework.</dd>
-<dt>Definition</dt><dd>Cumulative production over dekads 10–23 (1 April – 20 August) as a percentage of the 1999–2024 mean of the same window; value used = minimum over 2024–2026. Not applicable in the Saharan provinces (Borkou, Ennedi Est/Ouest, Tibesti: near-zero baseline production).</dd>
-<dt>Why</dt><dd>A pasture / livestock signal; 2026 is the worst season on record across the Sahelian belt (Kanem, Lac, Batha, Wadi Fira, Ouaddaï at 30–60% of normal).</dd></dl></div>
-<div class="card"><h3>4 · Estimated rainfall (FEWS NET RFE via FAO ASIS)</h3><dl>
-<dt>Source</dt><dd>The <code>rain_adm1_data</code> series from FAO ASIS (FEWS NET RFE, cropland mask, with long-term average), same 28 GAUL units transferred onto the 70 départements.</dd>
-<dt>Definition</dt><dd>Total from 1 June to 21 August as a percentage of the long-term average; value used = minimum over 2024–2026. Not applicable in the Saharan zone.</dd>
-<dt>Why</dt><dd>The raw meteorological hazard, independent of crop/pasture masks; confirms the 2026 deficit in the east and north (Wadi Fira, Batha Est ≈ 73–78% of normal).</dd></dl></div>
+<dt>Definition</dt><dd>Cumulative production over dekads 10–23 (1 April – 20 August). <strong>Trend correction identical to the AA framework's</strong>: a straight line fitted over 1999–2024 per département; adjusted biomass = the year's total / the trend-expected value for that year, in % (the trend is floored at 10% of the mean to avoid dividing by a near-zero value). Value used = the 2024–2026 minimum; the raw anomaly (% of the 1999–2024 mean) is shown alongside. Not applicable in the Saharan provinces (Borkou, Ennedi Est/Ouest, Tibesti: near-zero baseline production).</dd>
+<dt>Why</dt><dd>A pasture / livestock signal; 2026 is the worst season on record across the Sahelian belt. Once the trend is removed, Kanem and Nord Kanem fall to 16–26% of expected production, and Batha, Wadi Fira and Barh-El-Gazel Nord to 35–46%.</dd></dl></div>
 </div>
-<p class="small">Context columns added without entering the index: CH 2026 population, membership of the anticipatory-action drought framework zone (7 provinces: Batha, Kanem, Lac, Wadi Fira, Barh-El-Gazel, Sila, Ouaddaï; windows 1 and 2 triggered on 30 April and 9 May 2026, window 3 being checked on dekad 24), COD p-codes and the HNRP workbook's own p-codes/spellings.</p>
+<p class="small">Context columns added without entering the index: CH 2026 population, raw ASI and raw biomass (before the trend correction), the 1999–2024 trend slopes, membership of the anticipatory-action drought framework zone (7 provinces: Batha, Kanem, Lac, Wadi Fira, Barh-El-Gazel, Sila, Ouaddaï; windows 1 and 2 triggered on 30 April and 9 May 2026, window 3 being checked on dekad 24), COD p-codes and the HNRP workbook's own p-codes/spellings.</p>
 
 <h2>How the index is built</h2>
 <p>Each pillar becomes a <strong>0–1 score</strong> by linear interpolation between two fixed thresholds (0 = no signal, 1 = maximum signal, clipped), and the scores are then averaged with weights. Thresholds are absolute (not ranks) so the index stays comparable when a single source is updated. The 2024–2026 consolidation keeps the worst year of each pillar (max / min), not the average — the explorer lets you compare both.</p>
 <div class="formula">CH score        = clip( (CH Ph3+ max 2024–2026  − 10%) / (40% − 10%) , 0, 1 )
-ASI score       = clip(  ASI max 2024–2026 / 40%                     , 0, 1 )
-Biomass score   = clip( (100% − biomass min 2024–2026) / (100% − 50%) , 0, 1 )
-Rainfall score  = clip( (100% − rainfall min 2024–2026) / (100% − 60%) , 0, 1 )
+ASI score       = clip(  detrended ASI max 2024–2026 / 40%                 , 0, 1 )
+Biomass score   = clip( (100% − detrended biomass min 2024–2026) / (100% − 50%) , 0, 1 )
 
-Drought index = ( 0.4·CH + 0.2·ASI + 0.2·biomass + 0.2·rainfall ) / (sum of the weights of the available scores)
+where  detrended ASI     = raw ASI − (the trend's value for the year − the 1999–2024 mean), clipped 0–100
+and    detrended biomass = 100% × the year's total / the value expected from the 1999–2024 trend
+
+Drought index = ( 0.4·CH + 0.3·ASI + 0.3·biomass ) / (sum of the weights of the available scores)
 
 Category: Very high ≥ 0.60 · High 0.40–0.59 · Moderate 0.20–0.39 · Low &lt; 0.20
 Indicateur_Sécheresse = 1 if index ≥ 0.50 (same logic as the workbook's 50% threshold), else 0</div>
 <ul>
-<li><strong>Weights</strong>: 40% on the outcome (CH), 60% split equally across the three hazard signals, so that the index is not a copy of the CH but reflects the 2024–2026 agro-pastoral drought.</li>
-<li><strong>Thresholds</strong>: 10–40% of population in phase 3+ spans the observed range (9–44%); 40% of stressed cropland corresponds to severe stress in FAO's terms; 50% of normal biomass and 60% of normal rainfall mark the worst years on record in the Chadian Sahel.</li>
-<li><strong>Saharan zone</strong> (8 départements of Borkou, Ennedi Est, Ennedi Ouest, Tibesti): ASI, biomass and rainfall are meaningless there (no cropland, baseline production ≈ 0, rainfall anomalies of several hundred %). Their hazard scores are set to 0 — the index there reflects only the CH, weighted 0.4 — rather than letting a lone CH push these départements to the top. Their food insecurity (22–31% in phase 3+) remains visible in the CH columns.</li>
+<li><strong>Weights</strong>: 40% on the outcome (CH), 60% split equally across the two hazard signals (crops, pasture), so that the index is not a copy of the CH but reflects the 2024–2026 agro-pastoral drought.</li>
+<li><strong>Thresholds</strong>: 10–40% of population in phase 3+ spans the observed range (9–44%); 40% of stressed cropland corresponds to severe stress in FAO's terms; 50% of expected biomass marks the worst years on record in the Chadian Sahel.</li>
+<li><strong>Saharan zone</strong> (8 départements of Borkou, Ennedi Est, Ennedi Ouest, Tibesti): ASI and biomass are meaningless there (no cropland, baseline production ≈ 0). Their hazard scores are set to 0 — the index there reflects only the CH, weighted 0.4 — rather than letting a lone CH push these départements to the top. Their food insecurity (22–31% in phase 3+) remains visible in the CH columns.</li>
 <li><strong>Missing data</strong>: N'Djaména is not covered by the CH; its index uses the hazard scores only (weights renormalised) and is flagged in the Notes column.</li>
 <li><strong>Why max / min over 2024–2026</strong>: the sheet must reflect “what happened recently”; taking the extreme over the three seasons captures a shock even if it is absent from the latest analysis (e.g. Dababa: 31% in phase 3+ in 2024, 10% projected for 2026). The latest CH projection (June–August 2026) is shown alongside for reading.</li>
 </ul>
@@ -431,8 +430,9 @@ Indicateur_Sécheresse = 1 if index ≥ 0.50 (same logic as the workbook's 50% t
 
 <h2>Limitations and points of attention</h2>
 <ul>
-<li><strong>2026 season still running</strong>: 2026 ASI, biomass and rainfall stop at 21 August (dekad 23). They will be updated once dekad 24 is published (the official window-3 check of the AA framework); the November 2026 CH can replace the June–August projection.</li>
-<li><strong>Transfer from FAO's legacy units</strong>: ASI and rainfall are published by FAO on 28 units (GAUL 2015, ≈ the former départements). Current départements from the same former unit share one value — ASI does not, for example, separate the four départements of Logone Occidental.</li>
+<li><strong>2026 season still running</strong>: 2026 ASI and biomass stop at 21 August (dekad 23). They will be updated once dekad 24 is published (the official window-3 check of the AA framework); the November 2026 CH can replace the June–August projection.</li>
+<li><strong>The trend correction is an assumption</strong>: a straight line over 26 seasons is the simplest possible model. For biomass it is the method the AA drought framework already uses. For ASI, bounded between 0 and 100, the additive correction adds up to 15–17 points in the Sahelian units where the line falls towards zero: that is the right order of magnitude for the greening bias, but raw and adjusted ASI are best read side by side — both are in the sheet, the table and the explorer.</li>
+<li><strong>Transfer from FAO's legacy units</strong>: ASI is published by FAO on 28 units (GAUL 2015, ≈ the former départements). Current départements from the same former unit share one value — ASI does not, for example, separate the four départements of Logone Occidental.</li>
 <li><strong>Biomass at département level</strong>: in low-baseline départements (Barh-El-Gazel Nord, Nord Kanem, Mégri, Biltine) the relative anomaly is noisy; it remains consistent with the provincial signal (Kanem ≈ 30% of normal) used by the AA framework.</li>
 <li><strong>Workbook p-codes and names</strong>: the “Listes departements inclus” sheet swaps the p-codes of Abdi (COD TCD1402, Ouaddaï) and Djourf Al Ahmar (COD TCD2102, Sila) and codes Mourtcha as TCD2302 (COD TCD2303). The join was made on names; both p-codes are given in the sheet.</li>
 <li><strong>Population</strong>: the “CH 2026” population is context only; it differs from the populations used in the workbook's conflict/epidemic sheets.</li>
@@ -442,11 +442,11 @@ Indicateur_Sécheresse = 1 if index ≥ 0.50 (same logic as the workbook's 50% t
 <h2>Files and reproduction</h2>
 <ul>
 <li>Updated workbook: <a href="@@XLSX@@" download><strong>TCD_HNRP 2027_ANALYSE DES CHOCS_ALL_v2_secheresse.xlsx</strong></a> (original workbook + “Indice sécheresse” sheet + Recap columns AI–AL).</li>
-<li>Flat tables: <a href="indice_secheresse_adm2_2026-09-04.csv">indice_secheresse_adm2_2026-09-04.csv</a> (every column of the sheet) and <a href="indicateurs_par_annee_adm2.csv">indicateurs_par_annee_adm2.csv</a> (raw values of the four pillars per département and year, 1999–2026, used by the explorer).</li>
-<li>Scripts: <code>analysis/hnrp_2027_secheresse/</code> in the <a href="https://github.com/OCHA-DAP/ds-aa-tcd-drought">ds-aa-tcd-drought</a> repository — <code>fetch_data.sh</code> (FAO ASIS, GeoSahel, GAUL downloads), <code>build_indicators.py</code> and <code>build_timeseries.py</code> (computation), <code>inject_xlsx.py</code> (insertion into the workbook without breaking slicers and the data model), <code>gen_page.py</code> (this page).</li>
+<li>Flat tables: <a href="indice_secheresse_adm2_2026-09-04.csv">indice_secheresse_adm2_2026-09-04.csv</a> (every column of the sheet) and <a href="indicateurs_par_annee_adm2.csv">indicateurs_par_annee_adm2.csv</a> (pillar values per département and year, 1999–2026, raw and detrended, used by the explorer).</li>
+<li>Scripts: <code>analysis/hnrp_2027_secheresse/</code> in the <a href="https://github.com/OCHA-DAP/ds-aa-tcd-drought">ds-aa-tcd-drought</a> repository — <code>fetch_data.sh</code> (FAO ASIS, GeoSahel, GAUL downloads), <code>build_indicators.py</code> (computation, including the trends and the per-year table), <code>inject_xlsx.py</code> (insertion into the workbook without breaking slicers and the data model), <code>gen_page.py</code> (this page).</li>
 <li>CH context by département 2014–2026: <a href="../ipc_ch_evolution/">CH/IPC evolution report</a>. 2026 biomass tracking: <a href="../biomasse_check_2026/">window-3 check</a>.</li>
 </ul>
-<p class="small">Sources: CILSS/Cadre Harmonisé via HDX and OCHA Chad; FAO GIEWS ASIS (ASI, FEWS NET RFE); Action contre la Faim / GeoSahel BioGenerator; OCHA COD-AB Chad. Thresholds, weights and aggregation rules are OCHA CHD Data Science's and do not commit those producers.</p>
+<p class="small">Sources: CILSS/Cadre Harmonisé via HDX and OCHA Chad; FAO GIEWS ASIS (ASI); Action contre la Faim / GeoSahel BioGenerator; OCHA COD-AB Chad. Thresholds, weights and aggregation rules are OCHA CHD Data Science's and do not commit those producers.</p>
 </div>
 </main>
 <div id="tip"></div>
@@ -456,18 +456,18 @@ const DEPTS = D.depts, YEARS = D.years, V = D.v;
 const byPc = Object.fromEntries(DEPTS.map(d=>[d.pc,d]));
 const CATCOL = {TE:'var(--te)', E:'var(--e)', M:'var(--m)', F:'var(--f)', NA:'var(--na)'};
 const PAL = ['#2a78d6','#eb6834','#1baf7a','#7b5cd6','#e87ba4','#008300','#eda100','#c23b8f'];  // validated categorical palette (per-département lines when ≤ 8)
-const W = {ch:.4, asi:.2, bio:.2, pl:.2};
-const SC = {ch:v=>clip((v-10)/30), asi:v=>clip(v/40), bio:v=>clip((100-v)/50), pl:v=>clip((100-v)/40)};
-const AGG = {ch:'max', asi:'max', bio:'min', pl:'min'};
+const W = {ch:.4, asi:.3, bio:.3};
+const SC = {ch:v=>clip((v-10)/30), asi:v=>clip(v/40), bio:v=>clip((100-v)/50)};
+const AGG = {ch:'max', asi:'max', bio:'min'};
 function clip(x){ return Math.max(0, Math.min(1, x)); }
 function catOf(v){ return v==null? 'NA' : v>=.6? 'TE' : v>=.4? 'E' : v>=.2? 'M' : 'F'; }
 const TXT = {
-  fr:{TE:'Très élevé',E:'Élevé',M:'Modéré',F:'Faible',NA:'Non disponible', idx:'Indice', rank:'rang', ch:'CH Ph3+', asi:'ASI', bio:'Biomasse', pl:'Pluie', aa:'Zone AA sécheresse', sah:'Zone saharienne : scores aléa = 0',
+  fr:{TE:'Très élevé',E:'Élevé',M:'Modéré',F:'Faible',NA:'Non disponible', idx:'Indice', rank:'rang', ch:'CH Ph3+', asi:'ASI détend.', bio:'Biomasse détend.', asi_raw:'ASI brut', bio_raw:'Biomasse brute', aa:'Zone AA sécheresse', sah:'Zone saharienne : scores aléa = 0',
       year:'Année', cons:'Consolidé', worst:'pire année', mean:'moyenne', official:'= indice officiel', none:'Aucun indicateur sélectionné', deps:'départements',
-      capx:'Catégorie de l\'indice recalculé pour la sélection ci-dessus.', capts:'Une ligne par département ; couleur = catégorie de l\'indice consolidé 2024–2026 (plus de 8 lignes : survoler pour identifier).', captsd:'Une ligne par département, une couleur par département (légende ci-dessus).', nolines:'Aucun département dans la sélection.', val:'valeur', ofnormal:'% de la normale', pct:'%'},
-  en:{TE:'Very high',E:'High',M:'Moderate',F:'Low',NA:'Not available', idx:'Index', rank:'rank', ch:'CH Ph3+', asi:'ASI', bio:'Biomass', pl:'Rainfall', aa:'AA drought zone', sah:'Saharan zone: hazard scores = 0',
+      capx:'Catégorie de l\'indice recalculé pour la sélection ci-dessus.', capts:'Une ligne par département ; couleur = catégorie de l\'indice consolidé 2024–2026 (plus de 8 lignes : survoler pour identifier).', captsd:'Une ligne par département, une couleur par département (légende ci-dessus).', nolines:'Aucun département dans la sélection.', val:'valeur', ofnormal:'% de la tendance', pct:'%'},
+  en:{TE:'Very high',E:'High',M:'Moderate',F:'Low',NA:'Not available', idx:'Index', rank:'rank', ch:'CH Ph3+', asi:'Detr. ASI', bio:'Detr. biomass', asi_raw:'Raw ASI', bio_raw:'Raw biomass', aa:'AA drought zone', sah:'Saharan zone: hazard scores = 0',
       year:'Year', cons:'Consolidated', worst:'worst year', mean:'mean', official:'= official index', none:'No indicator selected', deps:'départements',
-      capx:'Category of the index recomputed for the selection above.', capts:'One line per département; colour = category in the consolidated 2024–2026 index (more than 8 lines: hover to identify).', captsd:'One line per département, one colour per département (legend above).', nolines:'No département in the selection.', val:'value', ofnormal:'% of normal', pct:'%'}
+      capx:'Category of the index recomputed for the selection above.', capts:'One line per département; colour = category in the consolidated 2024–2026 index (more than 8 lines: hover to identify).', captsd:'One line per département, one colour per département (legend above).', nolines:'No département in the selection.', val:'value', ofnormal:'% of trend', pct:'%'}
 };
 let LANG = 'fr';
 function T(k){ return TXT[LANG][k] || k; }
@@ -499,7 +499,7 @@ function paintMap(svg, valueFn, tipFn){
 }
 const map0 = document.getElementById('map0'), map1 = document.getElementById('map1');
 map1.innerHTML = map0.innerHTML;
-function tip0(pc){ const d=byPc[pc]; return `<b>${d.dep} <span style="color:var(--muted);font-weight:400">(${d.prov})</span></b>${T('idx')} <strong>${fmt(d.idx,2)}</strong> · ${T(d.cat)} · ${T('rank')} ${d.rang}/70<br>CH ${fmt(d.s_ch,2)} (Ph3+ max ${fmt(d.ch_max,0)}%, 2026 ${fmt(d.ch_proj,0)}%)<br>ASI ${fmt(d.s_asi,2)} (max ${fmt(d.asi_max)}%) · ${T('bio')} ${fmt(d.s_bio,2)} (min ${fmt(d.bio_min,0)}%) · ${T('pl')} ${fmt(d.s_pl,2)} (min ${fmt(d.pl_min,0)}%)${d.aa?'<br>'+T('aa'):''}${d.sah?'<br>'+T('sah'):''}`; }
+function tip0(pc){ const d=byPc[pc]; return `<b>${d.dep} <span style="color:var(--muted);font-weight:400">(${d.prov})</span></b>${T('idx')} <strong>${fmt(d.idx,2)}</strong> · ${T(d.cat)} · ${T('rank')} ${d.rang}/70<br>CH ${fmt(d.s_ch,2)} (Ph3+ max ${fmt(d.ch_max,0)}%, 2026 ${fmt(d.ch_proj,0)}%)<br>ASI ${fmt(d.s_asi,2)} (max ${fmt(d.asi_max)}%) · ${T('bio')} ${fmt(d.s_bio,2)} (min ${fmt(d.bio_min,0)}%)${d.aa?'<br>'+T('aa'):''}${d.sah?'<br>'+T('sah'):''}`; }
 
 // ---------- explorer ----------
 const yrSel=document.getElementById('yr'), y0Sel=document.getElementById('y0'), y1Sel=document.getElementById('y1');
@@ -516,12 +516,12 @@ function renderExplorer(){
   paintMap(map1, pc=>res[pc].idx, pc=>{ const d=byPc[pc], r=res[pc]; const lines=s.sel.map(k=>`${T(k)} ${r.parts[k].s==null?'—':fmt(r.parts[k].s,2)} (${fmt(r.parts[k].v, k==='ch'||k==='asi'?0:0)}${k==='ch'||k==='asi'?'%':' '+T('ofnormal')})`).join('<br>'); return `<b>${d.dep} <span style="color:var(--muted);font-weight:400">(${d.prov})</span></b>${T('idx')} <strong>${fmt(r.idx,2)}</strong> · ${T(catOf(r.idx))}<br>${lines}${d.sah?'<br>'+T('sah'):''}`; });
   legendHtml(document.getElementById('legend1'));
   const counts={TE:0,E:0,M:0,F:0,NA:0}; DEPTS.forEach(d=>counts[catOf(res[d.pc].idx)]++);
-  const isOfficial = s.mode==='range' && s.y0===2024 && s.y1===2026 && s.agg==='worst' && s.sel.length===4;
+  const isOfficial = s.mode==='range' && s.y0===2024 && s.y1===2026 && s.agg==='worst' && s.sel.length===3;
   const per = s.mode==='year'? `${T('year')} ${s.y0}` : `${T('cons')} ${s.y0}–${s.y1}, ${T(s.agg)}`;
   document.getElementById('xstat').innerHTML = s.sel.length? `${per} · ${s.sel.map(T).join(' + ')} → ${['TE','E','M','F','NA'].map(c=>`<span class="pill c-${c}">${T(c)} ${counts[c]}</span>`).join(' ')}${isOfficial?`<span class="official">${T('official')}</span>`:''}` : T('none');
   document.getElementById('xcap').textContent = T('capx');
   const rows = DEPTS.map(d=>({d, r:res[d.pc]})).filter(x=>x.r.idx!=null).sort((a,b)=>b.r.idx-a.r.idx);
-  document.getElementById('xtb').innerHTML = rows.map((x,i)=>`<tr><td class="num">${i+1}</td><td>${x.d.dep}</td><td>${x.d.prov}</td><td class="num"><strong>${fmt(x.r.idx,2)}</strong></td><td><span class="pill c-${catOf(x.r.idx)}">${T(catOf(x.r.idx))}</span></td>${['ch','asi','bio','pl'].map(k=>`<td class="num">${x.r.parts[k]? fmt(x.r.parts[k].v,0):'—'}</td>`).join('')}</tr>`).join('');
+  document.getElementById('xtb').innerHTML = rows.map((x,i)=>`<tr><td class="num">${i+1}</td><td>${x.d.dep}</td><td>${x.d.prov}</td><td class="num"><strong>${fmt(x.r.idx,2)}</strong></td><td><span class="pill c-${catOf(x.r.idx)}">${T(catOf(x.r.idx))}</span></td>${['ch','asi','bio'].map(k=>`<td class="num">${x.r.parts[k]? fmt(x.r.parts[k].v,0):'—'}</td>`).join('')}</tr>`).join('');
 }
 document.querySelectorAll('input[name=mode],input[name=agg],.ind,#yr,#y0,#y1').forEach(el=>el.addEventListener('change', renderExplorer));
 
@@ -539,12 +539,12 @@ function renderTS(){
   const series = deps.map(d=>{ const pts=[]; YEARS.forEach((y,i)=>{ if (y<y0||y>y1) return; let v; if (vr==='idx'){ v = sel.length? indexOf(d.pc,sel,y,y,'worst').idx : null; } else { v=V[d.pc][vr][i]; } if (v!=null) pts.push([y,v]); }); return {d, pts}; }).filter(s=>s.pts.length);
   const svg=document.getElementById('ts'); const Wd=960, Ht=440, ml=48, mr=130, mt=16, mb=34;
   const xs=YEARS.filter(y=>y>=y0&&y<=y1); const x0=xs[0], x1=xs[xs.length-1];
-  let ymax = vr==='idx'?1: vr==='ch'||vr==='asi'? 100 : Math.min(300, Math.max(120, Math.ceil(Math.max(0,...series.flatMap(s=>s.pts.map(p=>p[1])))/20)*20));
+  let ymax = vr==='idx'?1: vr==='ch'||vr==='asi'||vr==='asi_raw'? 100 : Math.min(300, Math.max(120, Math.ceil(Math.max(0,...series.flatMap(s=>s.pts.map(p=>p[1])))/20)*20));
   const X=y=> ml + (x1===x0?0:(y-x0)/(x1-x0))*(Wd-ml-mr), Y=v=> mt + (1-Math.min(v,ymax)/ymax)*(Ht-mt-mb);
   let g=''; const nty = vr==='idx'?5:5;
   for (let i=0;i<=nty;i++){ const v=ymax*i/nty; g+=`<line class="grid" x1="${ml}" x2="${Wd-mr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--grid)"/><text class="tick" x="${ml-6}" y="${Y(v)+3.5}" text-anchor="end" style="font:10.5px system-ui;fill:var(--muted)">${vr==='idx'?v.toFixed(1):Math.round(v)}</text>`; }
   const step = xs.length>16?2:1; xs.forEach((y,i)=>{ if (y===x1 || (i%step===0 && x1-y>=step)) g+=`<text x="${X(y)}" y="${Ht-mb+16}" text-anchor="middle" style="font:10.5px system-ui;fill:var(--muted)">${y}</text>`; });
-  if (vr==='bio'||vr==='pl') g+=`<line x1="${ml}" x2="${Wd-mr}" y1="${Y(100)}" y2="${Y(100)}" stroke="var(--ink-2)" stroke-dasharray="4 4"/>`;
+  if (vr==='bio'||vr==='bio_raw') g+=`<line x1="${ml}" x2="${Wd-mr}" y1="${Y(100)}" y2="${Y(100)}" stroke="var(--ink-2)" stroke-dasharray="4 4"/>`;
   if (vr==='idx') [.2,.4,.6].forEach(c=>{ g+=`<line x1="${ml}" x2="${Wd-mr}" y1="${Y(c)}" y2="${Y(c)}" stroke="var(--warn-border)" stroke-dasharray="2 5" opacity=".6"/>`; });
   let lines='', labels='';
   const perDept = series.length<=PAL.length; const colOf = (s,i)=> perDept? PAL[i] : CATCOL[s.d.cat];
@@ -553,7 +553,7 @@ function renderTS(){
   svg.innerHTML = `<g class="axis">${g}</g><g id="tslines">${lines}</g><g>${labels}</g>`;
   svg.querySelectorAll('.tsline').forEach(p=>{ p.addEventListener('mousemove', e=>{ const s=series[+p.dataset.i]; svg.querySelectorAll('.tsline').forEach(q=>q.classList.toggle('tsdim', q!==p)); p.classList.add('hi');
       const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY; const loc=pt.matrixTransform(svg.getScreenCTM().inverse()); const yr=Math.round(x0+(loc.x-ml)/(Wd-ml-mr)*(x1-x0)); const hit=s.pts.find(q=>q[0]===yr);
-      showTip(e, `<b>${s.d.dep} <span style="color:var(--muted);font-weight:400">(${s.d.prov})</span></b>${hit? yr+' : <strong>'+fmt(hit[1], vr==='idx'?2:0)+(vr==='idx'?'':vr==='ch'||vr==='asi'?' %':' '+T('ofnormal'))+'</strong><br>':''}${T('cons')} 2024–2026 : ${fmt(s.d.idx,2)} · ${T(s.d.cat)}`); });
+      showTip(e, `<b>${s.d.dep} <span style="color:var(--muted);font-weight:400">(${s.d.prov})</span></b>${hit? yr+' : <strong>'+fmt(hit[1], vr==='idx'?2:0)+(vr==='idx'?'':vr==='ch'||vr==='asi'||vr==='asi_raw'?' %':vr==='bio'?' '+T('ofnormal'):' %')+'</strong><br>':''}${T('cons')} 2024–2026 : ${fmt(s.d.idx,2)} · ${T(s.d.cat)}`); });
     p.addEventListener('mouseleave', ()=>{ svg.querySelectorAll('.tsline').forEach(q=>{q.classList.remove('tsdim'); q.classList.remove('hi');}); tip.style.display='none'; }); });
   const lg=document.getElementById('legend2');
   if (perDept) lg.innerHTML = series.map((s,i)=>`<span><i style="background:${PAL[i]}"></i>${s.d.dep} <span class="pill c-${s.d.cat}" style="font-size:.68rem;padding:0 6px">${T(s.d.cat)}</span></span>`).join(''); else legendHtml(lg);
@@ -568,10 +568,10 @@ function renderTable(){
   let rows = DEPTS.filter(d=>!q || [d.dep,d.prov,T(d.cat),d.nom].join(' ').toLowerCase().includes(q));
   rows.sort((a,b)=>{ let x=a[sortK], y=b[sortK]; if (sortK==='cat'){ x=a.idx; y=b.idx; } if(x==null) return 1; if(y==null) return -1; if(typeof x==='string') return asc? x.localeCompare(y,'fr') : y.localeCompare(x,'fr'); if (typeof x==='boolean'){ x=+x; y=+y; } return asc? x-y : y-x; });
   const yn = b=> b? (LANG==='fr'?'Oui':'Yes') : (LANG==='fr'?'Non':'No');
-  document.getElementById('tb').innerHTML = rows.map(d=>`<tr><td class="num">${d.rang}</td><td>${d.dep}</td><td>${d.prov}</td><td class="num"><strong>${fmt(d.idx,2)}</strong></td><td><span class="pill c-${d.cat}">${T(d.cat)}</span></td><td class="num">${d.ind}</td><td>${yn(d.aa)}</td><td class="num">${fmt(d.s_ch,2)}</td><td class="num">${fmt(d.ch_proj,0)}</td><td class="num">${fmt(d.ch_max,0)}</td><td class="num">${fmt(d.s_asi,2)}</td><td class="num">${fmt(d.asi_max)}</td><td class="num">${fmt(d.s_bio,2)}</td><td class="num">${fmt(d.bio_min,0)}</td><td class="num">${fmt(d.s_pl,2)}</td><td class="num">${fmt(d.pl_min,0)}</td><td class="num">${d.pop==null?'—':d.pop.toLocaleString(LANG==='fr'?'fr-FR':'en-GB')}</td></tr>`).join('');
+  document.getElementById('tb').innerHTML = rows.map(d=>`<tr><td class="num">${d.rang}</td><td>${d.dep}</td><td>${d.prov}</td><td class="num"><strong>${fmt(d.idx,2)}</strong></td><td><span class="pill c-${d.cat}">${T(d.cat)}</span></td><td class="num">${d.ind}</td><td>${yn(d.aa)}</td><td class="num">${fmt(d.s_ch,2)}</td><td class="num">${fmt(d.ch_proj,0)}</td><td class="num">${fmt(d.ch_max,0)}</td><td class="num">${fmt(d.s_asi,2)}</td><td class="num">${fmt(d.asi_max)}</td><td class="num">${fmt(d.asi_raw)}</td><td class="num">${fmt(d.s_bio,2)}</td><td class="num">${fmt(d.bio_min,0)}</td><td class="num">${fmt(d.bio_raw,0)}</td><td class="num">${d.pop==null?'—':d.pop.toLocaleString(LANG==='fr'?'fr-FR':'en-GB')}</td></tr>`).join('');
   document.querySelectorAll('#tbl th').forEach(th=>{ th.classList.toggle('sorted', th.dataset.k===sortK); th.classList.toggle('asc', th.dataset.k===sortK && asc); });
 }
-document.querySelectorAll('#tbl th').forEach(th=>th.addEventListener('click', ()=>{ if(sortK===th.dataset.k) asc=!asc; else { sortK=th.dataset.k; asc = !['idx','cat','s_ch','s_asi','s_bio','s_pl','ch_proj','ch_max','asi_max','bio_min','pl_min','pop','ind','aa'].includes(sortK); } renderTable(); }));
+document.querySelectorAll('#tbl th').forEach(th=>th.addEventListener('click', ()=>{ if(sortK===th.dataset.k) asc=!asc; else { sortK=th.dataset.k; asc = !['idx','cat','s_ch','s_asi','s_bio','ch_proj','ch_max','asi_max','asi_raw','bio_min','bio_raw','pop','ind','aa'].includes(sortK); } renderTable(); }));
 document.getElementById('q').addEventListener('input', renderTable);
 
 function renderAll(){ paintMap(map0, pc=>byPc[pc].idx, tip0); legendHtml(document.getElementById('legend0')); renderExplorer(); renderTS(); renderTable(); }

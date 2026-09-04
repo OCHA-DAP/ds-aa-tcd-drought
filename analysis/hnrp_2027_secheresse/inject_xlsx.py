@@ -98,21 +98,32 @@ COLS = [  # header, field, kind
     ),
     ("CH phase zone max 2024–2026", "ch_phase_max_2024_2026", "int"),
     ("Score CH (0–1)", "score_ch", "f2"),
-    ("ASI 2024 (% cultures stressées)", "asi_2024", "1dp"),
-    ("ASI 2025 (%)", "asi_2025", "1dp"),
-    ("ASI 2026 à date (%)", "asi_2026", "1dp"),
-    ("ASI max 2024–2026", "asi_max_2024_2026", "f1"),
+    ("ASI détendancié 2024 (% cultures stressées)", "asi_2024", "1dp"),
+    ("ASI détendancié 2025 (%)", "asi_2025", "1dp"),
+    ("ASI détendancié 2026 à date (%)", "asi_2026", "1dp"),
+    ("ASI détendancié max 2024–2026", "asi_max_2024_2026", "f1"),
     ("Score ASI (0–1)", "score_asi", "f2"),
-    ("Biomasse 2024 (% de la moyenne 1999–2024)", "bio_2024", "1dp"),
-    ("Biomasse 2025 (%)", "bio_2025", "1dp"),
-    ("Biomasse 2026 à date (%)", "bio_2026", "1dp"),
-    ("Biomasse min 2024–2026", "bio_min_2024_2026", "f1"),
+    (
+        "ASI brut max 2024–2026 (avant correction)",
+        "asi_raw_max_2024_2026",
+        "1dp",
+    ),
+    ("Tendance ASI 1999–2024 (points/an)", "asi_trend_pts_per_yr", "2dp"),
+    ("Biomasse détendanciée 2024 (% de la tendance)", "bio_2024", "1dp"),
+    ("Biomasse détendanciée 2025 (%)", "bio_2025", "1dp"),
+    ("Biomasse détendanciée 2026 à date (%)", "bio_2026", "1dp"),
+    ("Biomasse détendanciée min 2024–2026", "bio_min_2024_2026", "f1"),
     ("Score biomasse (0–1)", "score_bio", "f2"),
-    ("Pluie 2024 (% de la normale)", "pluie_2024", "1dp"),
-    ("Pluie 2025 (%)", "pluie_2025", "1dp"),
-    ("Pluie 2026 à date (%)", "pluie_2026", "1dp"),
-    ("Pluie min 2024–2026", "pluie_min_2024_2026", "f1"),
-    ("Score pluie (0–1)", "score_pluie", "f2"),
+    (
+        "Biomasse brute min 2024–2026 (% moy. 1999–2024)",
+        "bio_raw_min_2024_2026",
+        "1dp",
+    ),
+    (
+        "Tendance biomasse 1999–2024 (% de la moy./an)",
+        "bio_trend_pct_per_yr",
+        "2dp",
+    ),
     ("INDICE SÉCHERESSE (0–1)", "indice_secheresse", "f2"),
     ("Rang (1 = priorité max.)", "rang", "fint"),
     ("Catégorie", "categorie", "ftxt"),
@@ -126,66 +137,98 @@ COLS = [  # header, field, kind
 L = {f: col(i + 1) for i, (h, f, k) in enumerate(COLS)}
 assert (
     L["score_ch"] == "N"
-    and L["indice_secheresse"] == "AD"
-    and L["notes"] == "AH"
+    and L["indice_secheresse"] == "AC"
+    and L["notes"] == "AG"
 ), L
 LAST = L["notes"]
+C_SAH, C_CHMAX, C_SCH = (
+    L["zone_saharienne"],
+    L["ch_p3_pct_max_2024_2026"],
+    L["score_ch"],
+)
+C_ASI0, C_ASI2, C_ASIM, C_SASI = (
+    L["asi_2024"],
+    L["asi_2026"],
+    L["asi_max_2024_2026"],
+    L["score_asi"],
+)
+C_BIO0, C_BIO2, C_BIOM, C_SBIO = (
+    L["bio_2024"],
+    L["bio_2026"],
+    L["bio_min_2024_2026"],
+    L["score_bio"],
+)
+C_IDX, C_RANK, C_CAT, C_IND = (
+    L["indice_secheresse"],
+    L["rang"],
+    L["categorie"],
+    L["indicateur_secheresse"],
+)
 
 
 def formula(field, r):
-    g = f"$G{r}"
+    g = f"${C_SAH}{r}"
+    P = PARAM  # parameter cell per role, e.g. P["w_ch"] -> "$C$3"
     if field == "score_ch":
-        return f'IF(ISNUMBER(L{r}),MIN(1,MAX(0,(L{r}-$H$3)/($I$3-$H$3))),"")'
+        c = f"{C_CHMAX}{r}"
+        return f'IF(ISNUMBER({c}),MIN(1,MAX(0,({c}-{P["ch_lo"]})/({P["ch_hi"]}-{P["ch_lo"]}))),"")'
     if field == "asi_max_2024_2026":
-        return f'IF(COUNT(O{r}:Q{r})=0,"",MAX(O{r}:Q{r}))'
+        rng = f"{C_ASI0}{r}:{C_ASI2}{r}"
+        return f'IF(COUNT({rng})=0,"",MAX({rng}))'
     if field == "score_asi":
-        return f'IF(ISNUMBER(R{r}),MIN(1,MAX(0,R{r}/$J$3)),IF({g}="Oui",0,""))'
+        c = f"{C_ASIM}{r}"
+        return f'IF(ISNUMBER({c}),MIN(1,MAX(0,{c}/{P["asi"]})),IF({g}="Oui",0,""))'
     if field == "bio_min_2024_2026":
-        return f'IF(COUNT(T{r}:V{r})=0,"",MIN(T{r}:V{r}))'
+        rng = f"{C_BIO0}{r}:{C_BIO2}{r}"
+        return f'IF(COUNT({rng})=0,"",MIN({rng}))'
     if field == "score_bio":
-        return f'IF(ISNUMBER(W{r}),MIN(1,MAX(0,(100-W{r})/(100-$K$3))),IF({g}="Oui",0,""))'
-    if field == "pluie_min_2024_2026":
-        return f'IF(COUNT(Y{r}:AA{r})=0,"",MIN(Y{r}:AA{r}))'
-    if field == "score_pluie":
-        return f'IF(ISNUMBER(AB{r}),MIN(1,MAX(0,(100-AB{r})/(100-$L$3))),IF({g}="Oui",0,""))'
+        c = f"{C_BIOM}{r}"
+        return f'IF(ISNUMBER({c}),MIN(1,MAX(0,(100-{c})/(100-{P["bio"]}))),IF({g}="Oui",0,""))'
     if field == "indice_secheresse":
-        num = f"IF(ISNUMBER(N{r}),N{r}*$C$3,0)+IF(ISNUMBER(S{r}),S{r}*$D$3,0)+IF(ISNUMBER(X{r}),X{r}*$E$3,0)+IF(ISNUMBER(AC{r}),AC{r}*$F$3,0)"
-        den = f"IF(ISNUMBER(N{r}),$C$3,0)+IF(ISNUMBER(S{r}),$D$3,0)+IF(ISNUMBER(X{r}),$E$3,0)+IF(ISNUMBER(AC{r}),$F$3,0)"
-        return f'IF(COUNT(N{r},S{r},X{r},AC{r})=0,"",({num})/({den}))'
+        sc = [
+            (f"{C_SCH}{r}", P["w_ch"]),
+            (f"{C_SASI}{r}", P["w_asi"]),
+            (f"{C_SBIO}{r}", P["w_bio"]),
+        ]
+        num = "+".join(f"IF(ISNUMBER({c}),{c}*{w},0)" for c, w in sc)
+        den = "+".join(f"IF(ISNUMBER({c}),{w},0)" for c, w in sc)
+        cnt = ",".join(c for c, w in sc)
+        return f'IF(COUNT({cnt})=0,"",({num})/({den}))'
+    ix = f"{C_IDX}{r}"
+    ixa = f"${C_IDX}$"
     if field == "rang":
-        return f'IF(ISNUMBER(AD{r}),RANK(AD{r},$AD${R0}:$AD${R1}),"")'
+        return f'IF(ISNUMBER({ix}),RANK({ix},{ixa}{R0}:{ixa}{R1}),"")'
     if field == "categorie":
-        return f'IF(ISNUMBER(AD{r}),IF(AD{r}>=0.6,"Très élevé",IF(AD{r}>=0.4,"Élevé",IF(AD{r}>=0.2,"Modéré","Faible"))),"")'
+        return f'IF(ISNUMBER({ix}),IF({ix}>=0.6,"Très élevé",IF({ix}>=0.4,"Élevé",IF({ix}>=0.2,"Modéré","Faible"))),"")'
     if field == "indicateur_secheresse":
-        return f'IF(ISNUMBER(AD{r}),IF(AD{r}>=$M$3,1,0),"")'
+        return f'IF(ISNUMBER({ix}),IF({ix}>={P["seuil"]},1,0),"")'
     raise KeyError(field)
 
 
 # ---------- new sheet XML ----------
 rows = []
 rows.append(
-    f'<row r="1">{cs("A1","Indice de risque sécheresse par département — données secondaires 2024–2026 (CH/IPC, FAO ASI, biomasse GeoSahel, pluie)", S_TITLE)}</row>'
+    f'<row r="1">{cs("A1","Indice de risque sécheresse par département — données secondaires 2024–2026 (CH/IPC, FAO ASI et biomasse GeoSahel détendanciés)", S_TITLE)}</row>'
 )
 params = [
-    ("C", "Poids CH", 0.4),
-    ("D", "Poids ASI", 0.2),
-    ("E", "Poids biomasse", 0.2),
-    ("F", "Poids pluie", 0.2),
-    ("H", "CH : score 0 si Ph3+ ≤ (%)", 10),
-    ("I", "CH : score 1 si Ph3+ ≥ (%)", 40),
-    ("J", "ASI : score 1 si ≥ (%)", 40),
-    ("K", "Biomasse : score 1 si ≤ (% moy.)", 50),
-    ("L", "Pluie : score 1 si ≤ (% normale)", 60),
-    ("M", "Seuil Indicateur_Sécheresse", 0.5),
+    ("C", "w_ch", "Poids CH", 0.4),
+    ("D", "w_asi", "Poids ASI", 0.3),
+    ("E", "w_bio", "Poids biomasse", 0.3),
+    ("G", "ch_lo", "CH : score 0 si Ph3+ ≤ (%)", 10),
+    ("H", "ch_hi", "CH : score 1 si Ph3+ ≥ (%)", 40),
+    ("I", "asi", "ASI détend. : score 1 si ≥ (%)", 40),
+    ("J", "bio", "Biomasse détend. : score 1 si ≤ (% tendance)", 50),
+    ("K", "seuil", "Seuil Indicateur_Sécheresse", 0.5),
 ]
+PARAM = {key: f"${c}$3" for c, key, lab, v in params}
 r2 = cs("A2", "Paramètres (modifiables) :", S_NOTE) + "".join(
-    cs(f"{c}2", lab, S_NOTE) for c, lab, v in params
+    cs(f"{c}2", lab, S_NOTE) for c, key, lab, v in params
 )
-r3 = "".join(cn(f"{c}3", v, S_PARAM) for c, lab, v in params)
+r3 = "".join(cn(f"{c}3", v, S_PARAM) for c, key, lab, v in params)
 rows.append(f'<row r="2" ht="30" customHeight="1">{r2}</row>')
 rows.append(f'<row r="3">{r3}</row>')
 rows.append(
-    f'<row r="4">{cs("A4","Méthode, sources et limites : https://ocha-dap.github.io/ds-aa-tcd-drought/hnrp_2027_secheresse/ — construit le 2026-09-04 (OCHA CHD Data Science). Scores : 0 = pas de signal, 1 = signal maximal ; indice = moyenne pondérée des scores disponibles. Zone saharienne : ASI/biomasse/pluie non applicables (scores aléa = 0). Vide = non disponible.", S_SUB)}</row>'
+    f'<row r="4">{cs("A4","Méthode, sources et limites : https://ocha-dap.github.io/ds-aa-tcd-drought/hnrp_2027_secheresse/ — construit le 2026-09-04 (OCHA CHD Data Science). Scores : 0 = pas de signal, 1 = signal maximal ; indice = moyenne pondérée des scores disponibles. Zone saharienne : ASI/biomasse non applicables (scores aléa = 0). ASI et biomasse sont corrigés de leur tendance 1999–2024 ; les valeurs brutes figurent à côté. Vide = non disponible.", S_SUB)}</row>'
 )
 hdr = "".join(cs(f"{col(i+1)}5", h, S_HDR) for i, (h, f, k) in enumerate(COLS))
 rows.append(f'<row r="5" ht="78" customHeight="1">{hdr}</row>')
@@ -201,6 +244,8 @@ for i, rec in m.iterrows():
             cells.append(cn(ref, v, S_INT))
         elif k == "1dp":
             cells.append(cn(ref, v, S_1DP))
+        elif k == "2dp":
+            cells.append(cn(ref, v, S_2DP))
         elif k == "f1":
             cells.append(cf(ref, formula(f, r), v, S_1DP))
         elif k == "f2":
@@ -219,21 +264,21 @@ widths = {
     "F": 12,
     "G": 11,
     "H": 12,
-    "AF": 12,
-    "AH": 70,
+    "AE": 12,
+    "AG": 70,
 }
 cols_xml = "".join(
     f'<col min="{i+1}" max="{i+1}" width="{widths.get(col(i+1),11)}" customWidth="1"/>'
     for i in range(len(COLS))
 )
 cf_xml = (
-    f'<conditionalFormatting sqref="AF{R0}:AF{R1}">'
+    f'<conditionalFormatting sqref="{C_CAT}{R0}:{C_CAT}{R1}">'
     f'<cfRule type="cellIs" dxfId="{DXF_TE}" priority="1" operator="equal"><formula>"Très élevé"</formula></cfRule>'
     f'<cfRule type="cellIs" dxfId="{DXF_E}" priority="2" operator="equal"><formula>"Élevé"</formula></cfRule>'
     f'<cfRule type="cellIs" dxfId="{DXF_M}" priority="3" operator="equal"><formula>"Modéré"</formula></cfRule>'
     f'<cfRule type="cellIs" dxfId="{DXF_F}" priority="4" operator="equal"><formula>"Faible"</formula></cfRule></conditionalFormatting>'
-    f'<conditionalFormatting sqref="AD{R0}:AD{R1}"><cfRule type="colorScale" priority="5"><colorScale><cfvo type="num" val="0"/><cfvo type="num" val="1"/><color rgb="FFFFF5EB"/><color rgb="FFC00000"/></colorScale></cfRule></conditionalFormatting>'
-    f'<conditionalFormatting sqref="N{R0}:N{R1} S{R0}:S{R1} X{R0}:X{R1} AC{R0}:AC{R1}"><cfRule type="colorScale" priority="6"><colorScale><cfvo type="num" val="0"/><cfvo type="num" val="1"/><color rgb="FFFFFFFF"/><color rgb="FFF4B183"/></colorScale></cfRule></conditionalFormatting>'
+    f'<conditionalFormatting sqref="{C_IDX}{R0}:{C_IDX}{R1}"><cfRule type="colorScale" priority="5"><colorScale><cfvo type="num" val="0"/><cfvo type="num" val="1"/><color rgb="FFFFF5EB"/><color rgb="FFC00000"/></colorScale></cfRule></conditionalFormatting>'
+    f'<conditionalFormatting sqref="{C_SCH}{R0}:{C_SCH}{R1} {C_SASI}{R0}:{C_SASI}{R1} {C_SBIO}{R0}:{C_SBIO}{R1}"><cfRule type="colorScale" priority="6"><colorScale><cfvo type="num" val="0"/><cfvo type="num" val="1"/><color rgb="FFFFFFFF"/><color rgb="FFF4B183"/></colorScale></cfRule></conditionalFormatting>'
 )
 sheet_xml = (
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
@@ -379,10 +424,10 @@ for i, name in enumerate(recap_names):
     r = 7 + i
     rec = byname.loc[name]
     add[r] = (
-        cf(f"AI{r}", look("AD", r), rec.indice_secheresse, S_2DP)
-        + cf(f"AJ{r}", look("AF", r), rec.categorie)
-        + cf(f"AK{r}", look("AG", r), rec.indicateur_secheresse, S_INT)
-        + cf(f"AL{r}", look("AE", r), rec.rang, S_INT)
+        cf(f"AI{r}", look(C_IDX, r), rec.indice_secheresse, S_2DP)
+        + cf(f"AJ{r}", look(C_CAT, r), rec.categorie)
+        + cf(f"AK{r}", look(C_IND, r), rec.indicateur_secheresse, S_INT)
+        + cf(f"AL{r}", look(C_RANK, r), rec.rang, S_INT)
     )
 for r, cells in add.items():
     pat = rf'(<row r="{r}"[^>]*>)(.*?)(</row>)'
