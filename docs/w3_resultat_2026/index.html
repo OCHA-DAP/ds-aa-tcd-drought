@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex">
+<meta name="robots" content="noindex, nofollow">
 <title>Fenêtre 3 (biomasse) — résultat 2026 · Tchad AA sécheresse</title>
 <style>
 
@@ -48,40 +48,76 @@ p { color: var(--ink-2); margin: 0 0 12px; }
 .foot { font-size: .8rem; color: var(--muted); border-top: 1px solid var(--grid);
   padding-top: 12px; margin-top: 8px; }
 a { color: inherit; }
+
+.gate{max-width:440px; width:100%;}
+.gate form{display:flex; gap:10px; margin:18px 0 10px;}
+.gate input{flex:1; font:inherit; padding:10px 12px; border-radius:8px; border:1.5px solid var(--baseline);
+  background:var(--surface); color:var(--ink);}
+.gate input:focus{outline:2px solid var(--ink); outline-offset:1px;}
+.gate button{font:inherit; font-weight:600; padding:10px 18px; border-radius:8px; border:0;
+  background:var(--ink); color:var(--page); cursor:pointer;}
+.gate button:disabled{opacity:.5; cursor:wait;}
+.err{color:var(--critical); font-size:.9rem; min-height:1.3em; margin:0;}
+.lock{font-size:.85rem; color:var(--muted); margin:0;}
+[hidden]{display:none !important;}
 </style>
 </head>
 <body>
-<main>
+<main id="main">
 <a class="homelink" href="../">&larr; ds-aa-tcd-drought &middot; rapports</a>
+<div class="gate" id="gate">
 <p class="kicker">Tchad &middot; Cadre d’action anticipatoire sécheresse &middot; OCHA</p>
-<h1>Fenêtre&#160;3 — résultat de fin de saison 2026&#8202;: le seuil «&#8202;biomasse&#8202;» est franchi</h1>
-<p>La décade&#160;24 (21–31 août) est publiée. La biomasse cumulée de la saison 2026 sur les
-7 provinces de la zone d’intérêt s’établit à <strong>54,6&#8239;%</strong> de la tendance, contre un
-seuil de 84,5&#8239;% — la valeur la plus basse de l’historique 1999–2026, toutes les provinces
-étant sous le seuil.</p>
-<p>Trois diapositives&#8202;: <strong>1)</strong> le résultat de fin de saison face aux 27 saisons
-précédentes&#8202;; <strong>2)</strong> l’évolution de l’anomalie décade par décade pour les
-28 saisons, 2026 en rouge et les saisons ayant déclenché en ocre&#8202;; <strong>3)</strong> la
-fin de saison comparée à 2015 et le détail par province.</p>
-
-<div class="btns">
-  <a class="btn btn-primary" href="diapos.html">&#9654;&#65038; Ouvrir les diapositives</a>
-  <a class="btn btn-secondary" href="fenetre3_resultat_2026.pdf" download>
-    &#8595; Télécharger le PDF <small>(757&#8239;Ko)</small></a>
+<h1>Fenêtre&#160;3 — résultat 2026</h1>
+<p>Ce contenu n’est pas encore public. Saisissez le mot de passe pour l’ouvrir.</p>
+<form id="f" autocomplete="off">
+  <input id="pw" type="password" placeholder="Mot de passe" aria-label="Mot de passe" required>
+  <button id="go" type="submit">Ouvrir</button>
+</form>
+<p class="err" id="err" role="alert"></p>
+<p class="lock">Le contenu est chiffré dans la page et déchiffré dans votre navigateur&#8202;; rien n’est envoyé à un serveur.</p>
 </div>
-
-<div class="note">&#9888;&#65039; <strong>À confirmer avec le gouvernement.</strong> Le flux dekadal
-opérationnel n’a publié aucune décade 2026&#8202;; les valeurs proviennent de la couche de substitution
-GeoSahel WA_BIO_ADM1_v4, qui reproduit les cinq activations du backtest officiel à un ou deux points
-près. L’écart au seuil (30 points) est tel qu’aucune révision plausible ne change la conclusion.</div>
-
-<div class="foot">
-Données au 7 septembre 2026 (décade&#160;24 publiée) &middot;
-<a href="http://geosahel.info/">GeoSahel</a> (ACF BioGenerator, VITO/Copernicus DMP) &middot;
-<a href="../w3_diapos_2026/">diapositives de suivi de mi-saison</a> &middot;
-<a href="../biomasse_check_2026/">analyse détaillée</a> &middot;
-<a href="https://github.com/OCHA-DAP/ds-aa-tcd-drought">ds-aa-tcd-drought</a>
-</div>
+<div id="content" hidden></div>
 </main>
+<script>
+var ITER=300000;
+function b64(s){var b=atob(s.replace(/\s+/g,"")),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u;}
+async function deriveKey(pw,salt){
+  var km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt:salt,iterations:ITER,hash:'SHA-256'},km,
+    {name:'AES-GCM',length:256},false,['decrypt']);
+}
+var _key=null;
+async function decryptFile(name,pw){
+  var raw=b64(await (await fetch(name,{cache:'force-cache'})).text());
+  var salt=raw.slice(0,16),iv=raw.slice(16,28),ct=raw.slice(28);
+  if(!_key) _key=await deriveKey(pw,salt);
+  return crypto.subtle.decrypt({name:'AES-GCM',iv:iv},_key,ct);
+}
+function wire(onOk){
+  var f=document.getElementById('f'),inp=document.getElementById('pw'),btn=document.getElementById('go'),err=document.getElementById('err');
+  async function attempt(pw,fromStore){
+    btn.disabled=true; err.textContent='';
+    try{ await onOk(pw); sessionStorage.setItem('w3pw',pw); }
+    catch(e){ _key=null; sessionStorage.removeItem('w3pw');
+      if(!fromStore){ err.textContent='Mot de passe incorrect.'; inp.select(); }
+      document.getElementById('gate').hidden=false; }
+    btn.disabled=false;
+  }
+  f.addEventListener('submit',function(e){e.preventDefault(); attempt(inp.value,false);});
+  var st=null; try{ st=sessionStorage.getItem('w3pw'); }catch(e){}
+  if(st){ document.getElementById('gate').hidden=true; attempt(st,true); } else { inp.focus(); }
+}
+
+wire(async function(pw){
+  var html=new TextDecoder().decode(await decryptFile('landing.enc',pw));
+  var c=document.getElementById('content'); c.innerHTML=html; c.hidden=false;
+  document.getElementById('gate').hidden=true;
+  var a=document.getElementById('pdf');
+  try{
+    var pdf=await decryptFile('pdf.enc',pw);
+    a.href=URL.createObjectURL(new Blob([pdf],{type:'application/pdf'})); a.removeAttribute('aria-disabled');
+  }catch(e){ a.textContent='PDF indisponible'; }
+});
+</script>
 </body>
 </html>

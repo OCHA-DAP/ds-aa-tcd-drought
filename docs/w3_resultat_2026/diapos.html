@@ -3,320 +3,115 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex">
-<title>Fenêtre 3 (biomasse) — résultat 2026 · Tchad AA sécheresse</title>
+<meta name="robots" content="noindex, nofollow">
+<title>Fenêtre 3 (biomasse) — diapositives · Tchad AA sécheresse</title>
 <style>
-:root{
+
+:root {
   color-scheme: light;
-  --page:#f9f9f7; --surface:#fcfcfb;
-  --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
-  --grid:#e1e0d9; --baseline:#c3c2b7; --border:rgba(11,11,11,0.10);
-  --good:#0ca30c; --critical:#d03b3b; --past:#7b7a72; --trig:#b97f10;
-  --banner-bg:#fdf6ec; --banner-border:#b97f10; --shade:#111;
+  --page: #f9f9f7; --surface: #fcfcfb;
+  --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --baseline: #c3c2b7; --border: rgba(11,11,11,0.10);
+  --good: #0ca30c; --critical: #d03b3b;
+  --banner-bg: #fdf6ec; --banner-border: #b97f10; --shade: #111;
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --page:#161615; --surface:#1f1f1e;
-    --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
-    --grid:#2c2c2a; --baseline:#383835; --border:rgba(255,255,255,0.10);
-    --good:#3fbf3f; --critical:#e8615f; --past:#9a998f; --trig:#dea043;
-    --banner-bg:#241c0c; --banner-border:#b97f10; --shade:#000;
+    --page: #161615; --surface: #1f1f1e;
+    --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --baseline: #383835; --border: rgba(255,255,255,0.10);
+    --banner-bg: #241c0c; --banner-border: #b97f10; --shade: #000;
   }
 }
-:root[data-theme="dark"]{
-  color-scheme: dark;
-  --page:#161615; --surface:#1f1f1e;
-  --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
-  --grid:#2c2c2a; --baseline:#383835; --border:rgba(255,255,255,0.10);
-  --good:#3fbf3f; --critical:#e8615f; --past:#9a998f; --trig:#dea043;
-  --banner-bg:#241c0c; --banner-border:#b97f10; --shade:#000;
-}
-*{box-sizing:border-box;}
-html,body{height:100%;}
-body{margin:0; background:var(--shade); overflow:hidden; color:var(--ink);
-  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
-.stage{position:absolute; top:50%; left:50%; width:1280px; height:720px;
-  transform:translate(-50%,-50%) scale(var(--s,1)); background:var(--page);
-  border-radius:6px; box-shadow:0 8px 40px rgba(0,0,0,.45);}
-.slide{position:absolute; inset:0; padding:24px 34px 26px; display:none; flex-direction:column;}
-.slide.active{display:flex;}
-.kicker{font-size:11.5px; text-transform:uppercase; letter-spacing:.09em; color:var(--muted); margin:0 0 6px;}
-h1{font-size:27px; margin:0 0 13px; line-height:1.2; text-wrap:balance; font-weight:640;}
-h1 .thin{font-weight:400; color:var(--ink-2);}
-.verdict{display:inline-block; font-size:11.5px; font-weight:700; letter-spacing:.06em;
-  text-transform:uppercase; color:#fff; background:var(--critical);
-  border-radius:4px; padding:3px 9px; margin:0 0 9px; align-self:flex-start;}
-.banner{background:var(--banner-bg); border:1px solid var(--banner-border); border-left-width:3px;
-  border-radius:6px; padding:7px 12px; margin:0 0 13px; font-size:12.5px; line-height:1.42; color:var(--ink-2);}
-.banner strong{color:var(--ink);}
-.tiles{display:grid; grid-template-columns:repeat(4,1fr); gap:11px; margin:0 0 13px;}
-.tile{background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:9px 13px 10px;}
-.tile.lead{border-color:var(--critical); border-width:1.5px;}
-.tile .k{font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:3px;}
-.tile .v{font-size:24px; font-weight:660; line-height:1.12; font-variant-numeric:tabular-nums;}
-.tile .v.crit{color:var(--critical);}
-.tile .d{font-size:11.5px; line-height:1.32; color:var(--ink-2); margin-top:2px;}
-.tile .d strong{color:var(--ink);}
-.figrow{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
-figure{margin:0; background:var(--surface); border:1px solid var(--border);
-  border-radius:9px; padding:9px 12px 7px; min-width:0;}
-figure h2{font-size:13.5px; margin:0 2px 6px; font-weight:600;}
-figcaption{font-size:10.5px; color:var(--muted); padding:4px 2px 0; line-height:1.35;}
-svg{width:100%; height:auto; display:block;}
-.cards{display:grid; grid-template-columns:repeat(2,1fr); gap:11px;}
-.card{background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:10px 14px 11px;}
-.card .k{font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;}
-.card p{margin:0; font-size:12.5px; line-height:1.44; color:var(--ink-2);}
-.card p strong{color:var(--ink);}
-.steps{list-style:none; margin:11px 0 0; padding:0; display:flex; flex-direction:column; gap:7px;}
-.steps li{font-size:12.5px; line-height:1.4; color:var(--ink-2); padding-left:20px; position:relative;}
-.steps li::before{content:""; position:absolute; left:4px; top:6px; width:6px; height:6px;
-  border-radius:50%; background:var(--baseline);}
-.steps li strong{color:var(--ink);}
-.take{font-size:12.5px; line-height:1.44; margin:11px 0 0; color:var(--ink-2);}
-.take strong{color:var(--ink);}
-.legend{display:flex; gap:14px; flex-wrap:wrap; font-size:11px; color:var(--ink-2); padding:5px 2px 0;}
-.legend span{display:inline-flex; align-items:center; gap:5px;}
-.sw{width:11px; height:11px; border-radius:3px; display:inline-block; flex:none;}
-.sw.line{height:0; border-top:2.5px solid var(--critical); border-radius:0;}
-.sw.line-past{height:0; border-top:2.5px dashed var(--past); border-radius:0;}
-.sfoot{margin-top:auto; padding-top:9px; font-size:10.5px; color:var(--muted);
-  display:flex; justify-content:space-between; gap:16px;}
-.grid{stroke:var(--grid); stroke-width:1;}
-.tick{fill:var(--muted); font-variant-numeric:tabular-nums;}
-.dyear{fill:var(--ink-2);}
-.axis-title{fill:var(--muted);}
-.prov-name{fill:var(--ink); font-weight:500;}
-.bar-above{fill:var(--good); fill-opacity:.5;}
-.bar-below{fill:var(--critical); fill-opacity:.72;}
-.bar-current{fill-opacity:1; stroke:var(--ink); stroke-width:1.2;}
-.bar-marg{fill-opacity:.35; stroke:var(--critical); stroke-width:1.3; stroke-dasharray:4 3;}
-.bar-above:hover,.bar-below:hover{fill-opacity:1;}
-.thresh{stroke:var(--critical); stroke-width:1.5; stroke-dasharray:6 4; fill:none;}
-.thresh-tick{fill:var(--critical); font-weight:700; font-variant-numeric:tabular-nums;}
-.recap{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:13px;}
-table{width:100%; border-collapse:collapse; font-size:11.5px; font-variant-numeric:tabular-nums;}
-th{text-align:left; font-size:9.5px; text-transform:uppercase; letter-spacing:.05em;
-  color:var(--muted); font-weight:600; padding:0 6px 5px; border-bottom:1px solid var(--border);}
-td{padding:4px 6px; border-bottom:1px solid var(--border); color:var(--ink-2);}
-tbody tr:last-child td{border-bottom:none;}
-td.n{text-align:right;}
-tr.cur td{color:var(--ink); font-weight:650;}
-.tag{font-size:10px; padding:1px 6px; border-radius:3px; border:1px solid var(--border);
-  color:var(--ink-2); white-space:nowrap;}
-.tag.trig{color:#fff; background:var(--critical); border-color:var(--critical);}
-.thresh-label{font-weight:600; fill:var(--critical); paint-order:stroke;
-  stroke:var(--surface); stroke-width:3px; stroke-linejoin:round;}
-.val-label{fill:var(--ink-2); font-variant-numeric:tabular-nums; paint-order:stroke;
-  stroke:var(--surface); stroke-width:2.5px; stroke-linejoin:round;}
-.val-current{font-weight:700; fill:var(--ink);}
-.tl-cur{fill:none; stroke:var(--critical); stroke-width:2.6; stroke-linejoin:round;}
-.tl-cur-dot{fill:var(--critical);}
-.tl-cur-txt{fill:var(--critical); font-weight:700;}
-.tl-past{fill:none; stroke:var(--past); stroke-width:2.2; stroke-dasharray:5 4; stroke-linejoin:round;}
-.tl-past-dot{fill:var(--past);}
-.tl-past-txt{fill:var(--past); font-weight:600;}
-.ctrl{position:fixed; right:16px; bottom:12px; z-index:6; display:flex; align-items:center; gap:8px;
-  color:#eee; font:13px system-ui,sans-serif; font-variant-numeric:tabular-nums;
-  background:rgba(20,20,20,.75); border-radius:20px; padding:4px 10px;}
-.ctrl button{all:unset; cursor:pointer; font-size:17px; line-height:1; padding:2px 8px;
-  border-radius:50%; color:#eee;}
-.ctrl button:hover{background:rgba(255,255,255,.18);}
-.ctrl button:focus-visible{outline:2px solid #fff; outline-offset:1px;}
-.ctrl button[disabled]{opacity:.3; cursor:default;}
-.hint{position:fixed; left:16px; bottom:15px; z-index:6; color:rgba(238,238,238,.6);
-  font:12px system-ui,sans-serif;}
-@media (prefers-reduced-motion: no-preference){
-  .slide.active{animation:fade .18s ease-out;}
-  @keyframes fade{from{opacity:.4} to{opacity:1}}
-}
 
-.ln-other{fill:none; stroke:var(--muted); stroke-opacity:.42; stroke-width:1.1; stroke-linejoin:round;}
-.ln-other:hover{stroke-opacity:1; stroke-width:1.8;}
-.ln-trig{fill:none; stroke:var(--trig); stroke-width:1.9; stroke-linejoin:round;}
-.ln-marg{fill:none; stroke:var(--trig); stroke-width:1.5; stroke-dasharray:5 4; stroke-opacity:.8; stroke-linejoin:round;}
-.ln-cur{fill:none; stroke:var(--critical); stroke-width:3; stroke-linejoin:round; stroke-linecap:round;}
-.ln-cur-dot{fill:var(--critical);}
-.leader{stroke:var(--baseline); stroke-width:1;}
-.lbl-cur{fill:var(--critical); font-weight:700; font-variant-numeric:tabular-nums;}
-.lbl-trig{fill:var(--trig); font-weight:600; font-variant-numeric:tabular-nums;}
-.lbl-marg{fill:var(--muted); font-variant-numeric:tabular-nums;}
-.msep{stroke-dasharray:2 4;}
-.month{fill:var(--ink-2); text-transform:uppercase; letter-spacing:.06em; font-size:10px;}
-.sw.line-trig{height:0; border-top:2.5px solid var(--trig); border-radius:0;}
-.sw.line-marg{height:0; border-top:2px dashed var(--trig); border-radius:0;}
-.sw.line-other{height:0; border-top:1.5px solid var(--muted); opacity:.6; border-radius:0;}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink);
+  font: 15.5px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 24px; }
+main { max-width: 640px; width: 100%; }
+.kicker { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--muted); margin: 0 0 8px; }
+h1 { font-size: 1.7rem; margin: 0 0 10px; line-height: 1.25; }
+p { color: var(--ink-2); margin: 0 0 12px; }
+.btns { display: flex; gap: 12px; flex-wrap: wrap; margin: 22px 0 18px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+  border-radius: 10px; padding: 11px 20px; font-weight: 600; font-size: .98rem; }
+.btn-primary { background: var(--ink); color: var(--page); }
+.btn-primary:hover { opacity: .85; }
+.btn-secondary { border: 1.5px solid var(--ink); color: var(--ink); }
+.btn-secondary:hover { background: var(--surface); }
+.btn small { font-weight: 400; opacity: .7; }
+.note { background: var(--banner-bg); border: 1.5px solid var(--banner-border);
+  border-radius: 10px; padding: 10px 16px; font-size: .88rem; margin: 0 0 18px; }
+.foot { font-size: .8rem; color: var(--muted); border-top: 1px solid var(--grid);
+  padding-top: 12px; margin-top: 8px; }
+a { color: inherit; }
 
-@page { size: 1280px 720px; margin: 0; }
-@media print {
-  :root, :root:not([data-theme="light"]), :root[data-theme="dark"] {
-    color-scheme: light;
-    --page:#ffffff; --surface:#fcfcfb; --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
-    --grid:#e1e0d9; --baseline:#c3c2b7; --border:rgba(11,11,11,0.14);
-    --good:#0ca30c; --critical:#d03b3b; --past:#7b7a72; --trig:#b97f10;
-    --banner-bg:#fdf6ec; --banner-border:#b97f10; --shade:#fff;
-  }
-  html, body { height:auto; background:#fff; overflow:visible; }
-  .stage { position:static; transform:none; width:1280px; height:auto; border-radius:0; box-shadow:none; }
-  .slide { display:flex !important; position:relative; width:1280px; height:720px; break-after:page; }
-  .slide:last-child { break-after:auto; }
-  .ctrl, .hint { display:none !important; }
-  .slide.active { animation:none; }
-}
+.gate{max-width:440px; width:100%;}
+.gate form{display:flex; gap:10px; margin:18px 0 10px;}
+.gate input{flex:1; font:inherit; padding:10px 12px; border-radius:8px; border:1.5px solid var(--baseline);
+  background:var(--surface); color:var(--ink);}
+.gate input:focus{outline:2px solid var(--ink); outline-offset:1px;}
+.gate button{font:inherit; font-weight:600; padding:10px 18px; border-radius:8px; border:0;
+  background:var(--ink); color:var(--page); cursor:pointer;}
+.gate button:disabled{opacity:.5; cursor:wait;}
+.err{color:var(--critical); font-size:.9rem; min-height:1.3em; margin:0;}
+.lock{font-size:.85rem; color:var(--muted); margin:0;}
+[hidden]{display:none !important;}
 </style>
 </head>
 <body>
-<div class="stage">
-<section class="slide active" id="s1">
-  <p class="kicker">Tchad · Cadre d’action anticipatoire sécheresse · OCHA</p>
-  <span class="verdict">Seuil franchi — déclencheur atteint</span>
-  <h1>Fenêtre 3 (biomasse) : 54,6 % de la tendance
-    <span class="thin">— la saison la plus basse depuis 1999</span></h1>
-  <div class="banner"><strong>À confirmer avec le gouvernement.</strong>
-    Le flux opérationnel n’a publié aucune décade 2026 : valeurs issues de la couche de
-    substitution WA_BIO_ADM1_v4 (±1 à 2 points). L’écart au seuil est tel qu’aucune
-    révision plausible ne change la conclusion.</div>
-  <div class="tiles">
-    <div class="tile lead"><div class="k">Anomalie fin de saison (décade 24)</div>
-      <div class="v crit">54,6 %</div>
-      <div class="d">soit <strong>30 points</strong> sous le seuil de 84,5 %</div></div>
-    <div class="tile"><div class="k">Rang historique</div>
-      <div class="v">1<sup>re</sup> plus basse</div>
-      <div class="d">sur 28 saisons — 2015 suit à 68,4 %</div></div>
-    <div class="tile"><div class="k">Provinces sous le seuil</div>
-      <div class="v">7 / 7</div>
-      <div class="d">Kanem la plus basse, à <strong>26,2 %</strong></div></div>
-    <div class="tile"><div class="k">Biomasse cumulée, zone d’intérêt</div>
-      <div class="v">5 121</div>
-      <div class="d">kg / ha, contre <strong>9 372</strong> attendus selon la tendance</div></div>
-  </div>
-  <figure>
-    <h2>Anomalie en fin de saison (décade 24), 1999–2026</h2>
-    <svg viewBox="0 0 1200 262" role="img" aria-label="Anomalie de biomasse en fin de saison, decade 24, 1999 a 2026"><line class="grid" x1="48" x2="1184" y1="224.0" y2="224.0"/><text class="tick" x="40" y="228.0" text-anchor="end" font-size="11">0</text><line class="grid" x1="48" x2="1184" y1="188.7" y2="188.7"/><text class="tick" x="40" y="192.7" text-anchor="end" font-size="11">25</text><line class="grid" x1="48" x2="1184" y1="153.3" y2="153.3"/><text class="tick" x="40" y="157.3" text-anchor="end" font-size="11">50</text><line class="grid" x1="48" x2="1184" y1="118.0" y2="118.0"/><text class="tick" x="40" y="122.0" text-anchor="end" font-size="11">75</text><line class="grid" x1="48" x2="1184" y1="82.7" y2="82.7"/><text class="tick" x="40" y="86.7" text-anchor="end" font-size="11">100</text><line class="grid" x1="48" x2="1184" y1="47.3" y2="47.3"/><text class="tick" x="40" y="51.3" text-anchor="end" font-size="11">125</text><line class="grid" x1="48" x2="1184" y1="12.0" y2="12.0"/><text class="tick" x="40" y="16.0" text-anchor="end" font-size="11">150</text><rect class="bar-above" x="54.5" y="32.5" width="27.6" height="191.5" rx="1.5"><title>1999 : 135,5 % de la tendance</title></rect><text class="tick dyear" x="68.3" y="239.0" text-anchor="middle" font-size="10.5">’99</text><rect class="bar-above" x="95.1" y="71.9" width="27.6" height="152.1" rx="1.5"><title>2000 : 107,6 % de la tendance</title></rect><text class="tick dyear" x="108.9" y="239.0" text-anchor="middle" font-size="10.5">’00</text><rect class="bar-above" x="135.6" y="80.4" width="27.6" height="143.6" rx="1.5"><title>2001 : 101,6 % de la tendance</title></rect><text class="tick dyear" x="149.4" y="239.0" text-anchor="middle" font-size="10.5">’01</text><rect class="bar-above" x="176.2" y="103.6" width="27.6" height="120.4" rx="1.5"><title>2002 : 85,2 % de la tendance</title></rect><text class="tick dyear" x="190.0" y="239.0" text-anchor="middle" font-size="10.5">’02</text><rect class="bar-above" x="216.8" y="65.1" width="27.6" height="158.9" rx="1.5"><title>2003 : 112,4 % de la tendance</title></rect><text class="tick dyear" x="230.6" y="239.0" text-anchor="middle" font-size="10.5">’03</text><rect class="bar-above" x="257.3" y="94.0" width="27.6" height="130.0" rx="1.5"><title>2004 : 92,0 % de la tendance</title></rect><text class="tick dyear" x="271.1" y="239.0" text-anchor="middle" font-size="10.5">’04</text><rect class="bar-above" x="297.9" y="59.1" width="27.6" height="164.9" rx="1.5"><title>2005 : 116,7 % de la tendance</title></rect><text class="tick dyear" x="311.7" y="239.0" text-anchor="middle" font-size="10.5">’05</text><rect class="bar-below" x="338.5" y="114.2" width="27.6" height="109.8" rx="1.5"><title>2006 : 77,7 % de la tendance — a déclenché la Fenêtre 3</title></rect><text class="tick dyear" x="352.3" y="239.0" text-anchor="middle" font-size="10.5">’06</text><text class="val-label" x="352.3" y="108.2" text-anchor="middle" font-size="11">77,7</text><rect class="bar-above" x="379.1" y="70.2" width="27.6" height="153.8" rx="1.5"><title>2007 : 108,8 % de la tendance</title></rect><text class="tick dyear" x="392.9" y="239.0" text-anchor="middle" font-size="10.5">’07</text><rect class="bar-above" x="419.6" y="83.5" width="27.6" height="140.5" rx="1.5"><title>2008 : 99,4 % de la tendance</title></rect><text class="tick dyear" x="433.4" y="239.0" text-anchor="middle" font-size="10.5">’08</text><rect class="bar-below" x="460.2" y="111.2" width="27.6" height="112.8" rx="1.5"><title>2009 : 79,8 % de la tendance — a déclenché la Fenêtre 3</title></rect><text class="tick dyear" x="474.0" y="239.0" text-anchor="middle" font-size="10.5">’09</text><text class="val-label" x="474.0" y="105.2" text-anchor="middle" font-size="11">79,8</text><rect class="bar-above" x="500.8" y="84.1" width="27.6" height="139.9" rx="1.5"><title>2010 : 99,0 % de la tendance</title></rect><text class="tick dyear" x="514.6" y="239.0" text-anchor="middle" font-size="10.5">’10</text><rect class="bar-below" x="541.3" y="118.4" width="27.6" height="105.6" rx="1.5"><title>2011 : 74,7 % de la tendance — a déclenché la Fenêtre 3</title></rect><text class="tick dyear" x="555.1" y="239.0" text-anchor="middle" font-size="10.5">’11</text><text class="val-label" x="555.1" y="112.4" text-anchor="middle" font-size="11">74,7</text><rect class="bar-above" x="581.9" y="45.9" width="27.6" height="178.1" rx="1.5"><title>2012 : 126,0 % de la tendance</title></rect><text class="tick dyear" x="595.7" y="239.0" text-anchor="middle" font-size="10.5">’12</text><rect class="bar-above" x="622.5" y="88.3" width="27.6" height="135.7" rx="1.5"><title>2013 : 96,0 % de la tendance</title></rect><text class="tick dyear" x="636.3" y="239.0" text-anchor="middle" font-size="10.5">’13</text><rect class="bar-below bar-marg" x="663.1" y="105.0" width="27.6" height="119.0" rx="1.5"><title>2014 : 84,2 % de la tendance — cas limite, non retenu</title></rect><text class="tick dyear" x="676.9" y="239.0" text-anchor="middle" font-size="10.5">’14</text><text class="val-label" x="676.9" y="99.0" text-anchor="middle" font-size="11">84,2</text><rect class="bar-below" x="703.6" y="127.3" width="27.6" height="96.7" rx="1.5"><title>2015 : 68,4 % de la tendance — a déclenché la Fenêtre 3</title></rect><text class="tick dyear" x="717.4" y="239.0" text-anchor="middle" font-size="10.5">’15</text><text class="val-label" x="717.4" y="121.3" text-anchor="middle" font-size="11">68,4</text><rect class="bar-above" x="744.2" y="85.1" width="27.6" height="138.9" rx="1.5"><title>2016 : 98,3 % de la tendance</title></rect><text class="tick dyear" x="758.0" y="239.0" text-anchor="middle" font-size="10.5">’16</text><rect class="bar-below" x="784.8" y="115.9" width="27.6" height="108.1" rx="1.5"><title>2017 : 76,5 % de la tendance — a déclenché la Fenêtre 3</title></rect><text class="tick dyear" x="798.6" y="239.0" text-anchor="middle" font-size="10.5">’17</text><text class="val-label" x="798.6" y="109.9" text-anchor="middle" font-size="11">76,5</text><rect class="bar-above" x="825.3" y="78.4" width="27.6" height="145.6" rx="1.5"><title>2018 : 103,0 % de la tendance</title></rect><text class="tick dyear" x="839.1" y="239.0" text-anchor="middle" font-size="10.5">’18</text><rect class="bar-above" x="865.9" y="74.5" width="27.6" height="149.5" rx="1.5"><title>2019 : 105,8 % de la tendance</title></rect><text class="tick dyear" x="879.7" y="239.0" text-anchor="middle" font-size="10.5">’19</text><rect class="bar-above" x="906.5" y="75.0" width="27.6" height="149.0" rx="1.5"><title>2020 : 105,4 % de la tendance</title></rect><text class="tick dyear" x="920.3" y="239.0" text-anchor="middle" font-size="10.5">’20</text><rect class="bar-above" x="947.1" y="76.4" width="27.6" height="147.6" rx="1.5"><title>2021 : 104,4 % de la tendance</title></rect><text class="tick dyear" x="960.9" y="239.0" text-anchor="middle" font-size="10.5">’21</text><rect class="bar-above" x="987.6" y="50.4" width="27.6" height="173.6" rx="1.5"><title>2022 : 122,8 % de la tendance</title></rect><text class="tick dyear" x="1001.4" y="239.0" text-anchor="middle" font-size="10.5">’22</text><rect class="bar-above" x="1028.2" y="79.3" width="27.6" height="144.7" rx="1.5"><title>2023 : 102,4 % de la tendance</title></rect><text class="tick dyear" x="1042.0" y="239.0" text-anchor="middle" font-size="10.5">’23</text><rect class="bar-above" x="1068.8" y="58.6" width="27.6" height="165.4" rx="1.5"><title>2024 : 117,0 % de la tendance</title></rect><text class="tick dyear" x="1082.6" y="239.0" text-anchor="middle" font-size="10.5">’24</text><rect class="bar-above" x="1109.3" y="58.8" width="27.6" height="165.2" rx="1.5"><title>2025 : 116,9 % de la tendance</title></rect><text class="tick dyear" x="1123.1" y="239.0" text-anchor="middle" font-size="10.5">’25</text><rect class="bar-below bar-current" x="1149.9" y="146.8" width="27.6" height="77.2" rx="1.5"><title>2026 : 54,6 % de la tendance — déclenchement 2026</title></rect><text class="tick dyear" x="1163.7" y="239.0" text-anchor="middle" font-size="10.5">’26</text><text class="val-label val-current" x="1163.7" y="140.8" text-anchor="middle" font-size="12.5">54,6</text><line class="thresh" x1="48" x2="1184" y1="104.6" y2="104.6"/><text class="thresh-tick" x="40" y="108.6" text-anchor="end" font-size="11">84,5</text><text class="axis-title" x="40" y="11" text-anchor="end" font-size="10">%</text></svg>
-    <div class="legend">
-      <span><i class="sw" style="background:var(--good); opacity:.5"></i> au-dessus du seuil</span>
-      <span><i class="sw" style="background:var(--critical); opacity:.72"></i> sous 84,5 % — déclenchement</span>
-      <span><i class="sw" style="background:var(--critical); opacity:.35; border:1.3px dashed var(--critical)"></i> 2014 : cas limite, non retenu</span>
-      <span><i class="sw" style="background:var(--critical); border:1.2px solid var(--ink)"></i> 2026</span>
-      <span><i class="sw line" style="border-top-style:dashed"></i> seuil 84,5 %</span>
-    </div>
-    <figcaption>Biomasse cumulée du 1<sup>er</sup> avril au 31 août (décades 10–24), sommée sur les
-      7 provinces de la zone d’intérêt, exprimée en % de la tendance linéaire 1999–2024.
-      2026 est la 7<sup>e</sup> saison sous le seuil et la plus basse de l’historique.</figcaption>
-  </figure>
-  <div class="sfoot"><span>1 / 3 · Cadre AA sécheresse Tchad (v. 2025-03-03)</span>
-    <span>Reconstruction GeoSahel <span style="font-variant-numeric:tabular-nums">WA_BIO_ADM1_v4</span> (BioGenerator / ACF, DMP Copernicus / VITO) · données au 7 septembre 2026</span></div>
-</section>
-<section class="slide" id="s2">
-  <p class="kicker">Tchad · Cadre d’action anticipatoire sécheresse · OCHA</p>
-  <h1>Une saison partie au-dessus de la tendance, <span class="thin">puis effondrée à partir de la mi-juin</span></h1>
-  <div class="tiles">
-    <div class="tile"><div class="k">Démarrage (décade 12, 21–30 avril)</div>
-      <div class="v">170 %</div>
-      <div class="d">2<sup>e</sup> plus haute à cette date — mais sur de <strong>très faibles volumes</strong> de saison sèche</div></div>
-    <div class="tile"><div class="k">Passage sous le seuil</div>
-      <div class="v crit">décade 18</div>
-      <div class="d">21–30 juin, puis <strong>7 décades consécutives</strong> sous 84,5 %</div></div>
-    <div class="tile"><div class="k">Chute de mi-saison</div>
-      <div class="v crit">134 % → 55 %</div>
-      <div class="d">entre la décade 16 (début juin) et la décade 24 — <strong>−79 points</strong> en huit décades</div></div>
-    <div class="tile"><div class="k">Les 5 saisons ayant déclenché</div>
-      <div class="v">sous le seuil dès la déc. 21</div>
-      <div class="d">au plus tard, et <strong>jamais remontées</strong> ensuite — le même profil de fin de saison qu’en 2026</div></div>
-  </div>
-  <figure>
-    <h2>Anomalie de biomasse cumulée à chaque décade, en % de la tendance de cette décade — 28 saisons, 1999–2026</h2>
-    <svg viewBox="0 0 1200 346" role="img" aria-label="Anomalie de biomasse detrendee a chaque decade, toutes les saisons 1999 a 2026"><line class="grid" x1="48" x2="1028" y1="272.8" y2="272.8"/><text class="tick" x="40" y="276.8" text-anchor="end" font-size="11">50</text><line class="grid" x1="48" x2="1028" y1="204.7" y2="204.7"/><text class="tick" x="40" y="208.7" text-anchor="end" font-size="11">100</text><line class="grid" x1="48" x2="1028" y1="136.6" y2="136.6"/><text class="tick" x="40" y="140.6" text-anchor="end" font-size="11">150</text><line class="grid" x1="48" x2="1028" y1="68.5" y2="68.5"/><text class="tick" x="40" y="72.5" text-anchor="end" font-size="11">200</text><text class="tick month" x="118.0" y="340.0" text-anchor="middle" font-size="11">avril</text><line class="grid msep" x1="223.0" x2="223.0" y1="14" y2="330.0"/><text class="tick month" x="328.0" y="340.0" text-anchor="middle" font-size="11">mai</text><line class="grid msep" x1="433.0" x2="433.0" y1="14" y2="330.0"/><text class="tick month" x="538.0" y="340.0" text-anchor="middle" font-size="11">juin</text><line class="grid msep" x1="643.0" x2="643.0" y1="14" y2="330.0"/><text class="tick month" x="748.0" y="340.0" text-anchor="middle" font-size="11">juillet</text><line class="grid msep" x1="853.0" x2="853.0" y1="14" y2="330.0"/><text class="tick month" x="958.0" y="340.0" text-anchor="middle" font-size="11">août</text><text class="tick" x="48.0" y="316.0" text-anchor="middle" font-size="10.5">10</text><text class="tick" x="118.0" y="316.0" text-anchor="middle" font-size="10.5">11</text><text class="tick" x="188.0" y="316.0" text-anchor="middle" font-size="10.5">12</text><text class="tick" x="258.0" y="316.0" text-anchor="middle" font-size="10.5">13</text><text class="tick" x="328.0" y="316.0" text-anchor="middle" font-size="10.5">14</text><text class="tick" x="398.0" y="316.0" text-anchor="middle" font-size="10.5">15</text><text class="tick" x="468.0" y="316.0" text-anchor="middle" font-size="10.5">16</text><text class="tick" x="538.0" y="316.0" text-anchor="middle" font-size="10.5">17</text><text class="tick" x="608.0" y="316.0" text-anchor="middle" font-size="10.5">18</text><text class="tick" x="678.0" y="316.0" text-anchor="middle" font-size="10.5">19</text><text class="tick" x="748.0" y="316.0" text-anchor="middle" font-size="10.5">20</text><text class="tick" x="818.0" y="316.0" text-anchor="middle" font-size="10.5">21</text><text class="tick" x="888.0" y="316.0" text-anchor="middle" font-size="10.5">22</text><text class="tick" x="958.0" y="316.0" text-anchor="middle" font-size="10.5">23</text><text class="tick" x="1028.0" y="316.0" text-anchor="middle" font-size="10.5">24</text><line class="thresh" x1="48" x2="1028" y1="225.8" y2="225.8"/><text class="thresh-tick" x="40" y="229.8" text-anchor="end" font-size="11">84,5</text><polyline class="ln-other" points="48.0,162.0 118.0,173.2 188.0,177.4 258.0,179.3 328.0,174.6 398.0,178.0 468.0,176.9 538.0,179.9 608.0,185.9 678.0,182.3 748.0,172.0 818.0,164.2 888.0,161.4 958.0,158.1 1028.0,156.3"><title>1999 : 135,5 % en fin de saison</title></polyline><polyline class="ln-other" points="48.0,184.4 118.0,175.2 188.0,158.6 258.0,164.1 328.0,157.4 398.0,159.3 468.0,155.5 538.0,144.2 608.0,144.1 678.0,159.7 748.0,172.1 818.0,175.0 888.0,178.7 958.0,187.2 1028.0,194.3"><title>2000 : 107,6 % en fin de saison</title></polyline><polyline class="ln-other" points="48.0,193.0 118.0,213.0 188.0,224.4 258.0,233.9 328.0,230.7 398.0,228.4 468.0,223.5 538.0,212.6 608.0,201.5 678.0,205.9 748.0,214.2 818.0,208.2 888.0,200.6 958.0,201.4 1028.0,202.5"><title>2001 : 101,6 % en fin de saison</title></polyline><polyline class="ln-other" points="48.0,246.2 118.0,246.5 188.0,247.3 258.0,239.5 328.0,240.1 398.0,240.6 468.0,233.4 538.0,219.9 608.0,218.3 678.0,227.0 748.0,237.8 818.0,239.8 888.0,232.3 958.0,227.7 1028.0,224.8"><title>2002 : 85,2 % en fin de saison</title></polyline><polyline class="ln-other" points="48.0,256.0 118.0,245.4 188.0,232.7 258.0,228.8 328.0,235.6 398.0,234.1 468.0,214.3 538.0,203.7 608.0,186.4 678.0,165.6 748.0,153.2 818.0,160.3 888.0,170.6 958.0,182.1 1028.0,187.8"><title>2003 : 112,4 % en fin de saison</title></polyline><polyline class="ln-other" points="48.0,207.9 118.0,189.0 188.0,187.8 258.0,197.6 328.0,207.5 398.0,205.6 468.0,205.1 538.0,204.5 608.0,202.9 678.0,192.3 748.0,192.8 818.0,198.5 888.0,210.3 958.0,215.2 1028.0,215.6"><title>2004 : 92,0 % en fin de saison</title></polyline><polyline class="ln-other" points="48.0,214.7 118.0,226.7 188.0,221.6 258.0,205.1 328.0,212.0 398.0,211.7 468.0,210.3 538.0,206.3 608.0,194.6 678.0,172.1 748.0,155.1 818.0,167.2 888.0,172.5 958.0,176.7 1028.0,181.9"><title>2005 : 116,7 % en fin de saison</title></polyline><polyline class="ln-other" points="48.0,255.3 118.0,224.4 188.0,224.1 258.0,222.9 328.0,215.6 398.0,219.1 468.0,225.4 538.0,228.9 608.0,230.3 678.0,229.3 748.0,222.2 818.0,210.4 888.0,205.2 958.0,196.5 1028.0,192.7"><title>2007 : 108,8 % en fin de saison</title></polyline><polyline class="ln-other" points="48.0,170.3 118.0,169.7 188.0,155.5 258.0,148.8 328.0,154.5 398.0,148.0 468.0,154.3 538.0,166.9 608.0,174.2 678.0,185.7 748.0,189.1 818.0,194.9 888.0,201.1 958.0,203.8 1028.0,205.5"><title>2008 : 99,4 % en fin de saison</title></polyline><polyline class="ln-other" points="48.0,231.9 118.0,249.6 188.0,251.2 258.0,247.0 328.0,250.7 398.0,258.9 468.0,259.7 538.0,261.6 608.0,264.0 678.0,260.2 748.0,250.3 818.0,224.1 888.0,210.0 958.0,206.7 1028.0,206.0"><title>2010 : 99,0 % en fin de saison</title></polyline><polyline class="ln-other" points="48.0,235.4 118.0,239.3 188.0,232.4 258.0,235.6 328.0,234.2 398.0,223.6 468.0,216.0 538.0,212.2 608.0,202.1 678.0,170.5 748.0,156.9 818.0,159.5 888.0,164.2 958.0,165.7 1028.0,169.3"><title>2012 : 126,0 % en fin de saison</title></polyline><polyline class="ln-other" points="48.0,177.8 118.0,150.3 188.0,155.0 258.0,151.7 328.0,146.5 398.0,156.3 468.0,175.1 538.0,193.2 608.0,198.1 678.0,203.0 748.0,217.3 818.0,225.9 888.0,223.2 958.0,217.1 1028.0,210.1"><title>2013 : 96,0 % en fin de saison</title></polyline><polyline class="ln-other" points="48.0,268.9 118.0,266.8 188.0,266.8 258.0,270.7 328.0,270.4 398.0,265.5 468.0,270.0 538.0,261.5 608.0,231.0 678.0,217.7 748.0,197.7 818.0,191.0 888.0,197.7 958.0,202.2 1028.0,207.0"><title>2016 : 98,3 % en fin de saison</title></polyline><polyline class="ln-other" points="48.0,249.6 118.0,268.5 188.0,270.3 258.0,271.0 328.0,270.6 398.0,264.2 468.0,265.1 538.0,257.5 608.0,213.7 678.0,186.1 748.0,185.9 818.0,193.8 888.0,193.4 958.0,199.1 1028.0,200.6"><title>2018 : 103,0 % en fin de saison</title></polyline><polyline class="ln-other" points="48.0,210.0 118.0,214.7 188.0,204.4 258.0,212.0 328.0,212.0 398.0,196.4 468.0,143.9 538.0,122.3 608.0,138.2 678.0,154.7 748.0,170.3 818.0,183.7 888.0,193.9 958.0,198.5 1028.0,196.8"><title>2019 : 105,8 % en fin de saison</title></polyline><polyline class="ln-other" points="48.0,246.7 118.0,214.1 188.0,212.8 258.0,210.8 328.0,204.9 398.0,205.6 468.0,220.6 538.0,234.2 608.0,241.3 678.0,240.2 748.0,222.6 818.0,211.5 888.0,208.3 958.0,204.0 1028.0,197.3"><title>2020 : 105,4 % en fin de saison</title></polyline><polyline class="ln-other" points="48.0,70.8 118.0,108.8 188.0,116.3 258.0,109.7 328.0,106.1 398.0,120.4 468.0,144.7 538.0,176.3 608.0,201.0 678.0,205.6 748.0,206.2 818.0,196.4 888.0,194.7 958.0,192.7 1028.0,198.7"><title>2021 : 104,4 % en fin de saison</title></polyline><polyline class="ln-other" points="48.0,221.6 118.0,212.3 188.0,202.1 258.0,204.3 328.0,198.5 398.0,194.6 468.0,203.0 538.0,211.7 608.0,215.7 678.0,209.3 748.0,196.4 818.0,184.1 888.0,178.2 958.0,178.2 1028.0,173.6"><title>2022 : 122,8 % en fin de saison</title></polyline><polyline class="ln-other" points="48.0,133.4 118.0,142.6 188.0,130.0 258.0,122.1 328.0,130.2 398.0,127.2 468.0,77.5 538.0,28.2 608.0,34.6 678.0,72.7 748.0,122.4 818.0,153.1 888.0,170.1 958.0,187.6 1028.0,201.4"><title>2023 : 102,4 % en fin de saison</title></polyline><polyline class="ln-other" points="48.0,175.5 118.0,203.0 188.0,212.4 258.0,223.5 328.0,227.7 398.0,236.9 468.0,246.7 538.0,247.7 608.0,245.7 678.0,235.0 748.0,214.7 818.0,201.4 888.0,190.8 958.0,183.6 1028.0,181.5"><title>2024 : 117,0 % en fin de saison</title></polyline><polyline class="ln-other" points="48.0,35.0 118.0,24.9 188.0,34.4 258.0,27.9 328.0,44.2 398.0,63.6 468.0,93.3 538.0,146.1 608.0,183.8 678.0,187.1 748.0,181.0 818.0,177.2 888.0,180.2 958.0,182.2 1028.0,181.7"><title>2025 : 116,9 % en fin de saison</title></polyline><polyline class="ln-trig" points="48.0,135.8 118.0,144.2 188.0,166.8 258.0,176.9 328.0,176.1 398.0,171.2 468.0,180.3 538.0,183.4 608.0,196.8 678.0,217.7 748.0,233.9 818.0,241.6 888.0,242.5 958.0,240.5 1028.0,235.0"><title>2006 : 77,7 % — a déclenché la Fenêtre 3</title></polyline><polyline class="ln-trig" points="48.0,183.0 118.0,187.4 188.0,194.0 258.0,187.4 328.0,186.8 398.0,194.9 468.0,205.3 538.0,216.7 608.0,233.3 678.0,239.4 748.0,238.0 818.0,234.1 888.0,232.9 958.0,231.5 1028.0,232.2"><title>2009 : 79,8 % — a déclenché la Fenêtre 3</title></polyline><polyline class="ln-trig" points="48.0,123.4 118.0,161.6 188.0,176.9 258.0,182.1 328.0,187.2 398.0,178.8 468.0,191.6 538.0,205.3 608.0,218.8 678.0,235.7 748.0,244.3 818.0,249.7 888.0,251.0 958.0,243.8 1028.0,239.1"><title>2011 : 74,7 % — a déclenché la Fenêtre 3</title></polyline><polyline class="ln-trig" points="48.0,266.8 118.0,212.2 188.0,219.0 258.0,227.0 328.0,231.2 398.0,239.7 468.0,248.9 538.0,258.2 608.0,266.2 678.0,275.1 748.0,280.5 818.0,270.6 888.0,260.5 958.0,252.2 1028.0,247.7"><title>2015 : 68,4 % — a déclenché la Fenêtre 3</title></polyline><polyline class="ln-trig" points="48.0,259.7 118.0,240.3 188.0,241.4 258.0,245.5 328.0,247.2 398.0,248.0 468.0,250.6 538.0,246.7 608.0,235.4 678.0,226.5 748.0,221.8 818.0,229.7 888.0,232.7 958.0,235.6 1028.0,236.7"><title>2017 : 76,5 % — a déclenché la Fenêtre 3</title></polyline><polyline class="ln-marg" points="48.0,230.5 118.0,238.2 188.0,234.1 258.0,218.6 328.0,207.0 398.0,209.4 468.0,219.0 538.0,236.3 608.0,247.3 678.0,250.7 748.0,251.9 818.0,251.4 888.0,243.3 958.0,232.9 1028.0,226.2"><title>2014 : 84,2 % — cas limite, non retenu</title></polyline><polyline class="ln-cur" points="48.0,126.8 118.0,131.9 188.0,109.5 258.0,112.7 328.0,116.1 398.0,131.8 468.0,158.8 538.0,196.6 608.0,226.2 678.0,245.3 748.0,252.6 818.0,254.9 888.0,259.7 958.0,261.7 1028.0,266.5"><title>2026 : 54,6 %</title></polyline><circle class="ln-cur-dot" cx="48.0" cy="126.8" r="3.2"><title>2026, décade 10 (1ᵉʳ–10 avril) : 157,2 %</title></circle><circle class="ln-cur-dot" cx="118.0" cy="131.9" r="3.2"><title>2026, décade 11 (11–20 avril) : 153,4 %</title></circle><circle class="ln-cur-dot" cx="188.0" cy="109.5" r="3.2"><title>2026, décade 12 (21–30 avril) : 169,9 %</title></circle><circle class="ln-cur-dot" cx="258.0" cy="112.7" r="3.2"><title>2026, décade 13 (1ᵉʳ–10 mai) : 167,5 %</title></circle><circle class="ln-cur-dot" cx="328.0" cy="116.1" r="3.2"><title>2026, décade 14 (11–20 mai) : 165,0 %</title></circle><circle class="ln-cur-dot" cx="398.0" cy="131.8" r="3.2"><title>2026, décade 15 (21–31 mai) : 153,5 %</title></circle><circle class="ln-cur-dot" cx="468.0" cy="158.8" r="3.2"><title>2026, décade 16 (1ᵉʳ–10 juin) : 133,7 %</title></circle><circle class="ln-cur-dot" cx="538.0" cy="196.6" r="3.2"><title>2026, décade 17 (11–20 juin) : 105,9 %</title></circle><circle class="ln-cur-dot" cx="608.0" cy="226.2" r="3.2"><title>2026, décade 18 (21–30 juin) : 84,2 %</title></circle><circle class="ln-cur-dot" cx="678.0" cy="245.3" r="3.2"><title>2026, décade 19 (1ᵉʳ–10 juillet) : 70,2 %</title></circle><circle class="ln-cur-dot" cx="748.0" cy="252.6" r="3.2"><title>2026, décade 20 (11–20 juillet) : 64,8 %</title></circle><circle class="ln-cur-dot" cx="818.0" cy="254.9" r="3.2"><title>2026, décade 21 (21–31 juillet) : 63,1 %</title></circle><circle class="ln-cur-dot" cx="888.0" cy="259.7" r="3.2"><title>2026, décade 22 (1ᵉʳ–10 août) : 59,6 %</title></circle><circle class="ln-cur-dot" cx="958.0" cy="261.7" r="3.2"><title>2026, décade 23 (11–20 août) : 58,1 %</title></circle><circle class="ln-cur-dot" cx="1028.0" cy="266.5" r="3.2"><title>2026, décade 24 (21–31 août) : 54,6 %</title></circle><line class="leader" x1="1031.0" y1="226.2" x2="1042.0" y2="217.0"/><text class="lbl-marg" x="1045.0" y="221.0" font-size="11.5">2014 · 84,2 (cas limite)</text><line class="leader" x1="1031.0" y1="232.2" x2="1042.0" y2="230.5"/><text class="lbl-trig" x="1045.0" y="234.5" font-size="11.5">2009 · 79,8</text><line class="leader" x1="1031.0" y1="235.0" x2="1042.0" y2="244.0"/><text class="lbl-trig" x="1045.0" y="248.0" font-size="11.5">2006 · 77,7</text><line class="leader" x1="1031.0" y1="236.7" x2="1042.0" y2="257.5"/><text class="lbl-trig" x="1045.0" y="261.5" font-size="11.5">2017 · 76,5</text><line class="leader" x1="1031.0" y1="239.1" x2="1042.0" y2="271.0"/><text class="lbl-trig" x="1045.0" y="275.0" font-size="11.5">2011 · 74,7</text><line class="leader" x1="1031.0" y1="247.7" x2="1042.0" y2="284.5"/><text class="lbl-trig" x="1045.0" y="288.5" font-size="11.5">2015 · 68,4</text><line class="leader" x1="1031.0" y1="266.5" x2="1042.0" y2="298.0"/><text class="lbl-cur" x="1045.0" y="302.0" font-size="12.5">2026 · 54,6</text></svg>
-    <div class="legend">
-      <span><i class="sw line"></i> 2026</span>
-      <span><i class="sw line-trig"></i> saisons ayant déclenché la Fenêtre 3 (2006, 2009, 2011, 2015, 2017)</span>
-      <span><i class="sw line-marg"></i> 2014, cas limite</span>
-      <span><i class="sw line-other"></i> autres saisons</span>
-      <span><i class="sw line" style="border-top-style:dashed"></i> seuil 84,5 %</span>
-    </div>
-    <figcaption>À chaque décade, la biomasse cumulée depuis le 1<sup>er</sup> avril est comparée à sa propre
-      tendance linéaire 1999–2024, comme le fait le déclencheur à la décade 24. Les anomalies d’avril–mai
-      portent sur quelques centaines de kg / ha et sont très volatiles ; la saison se joue de juin à août.</figcaption>
-  </figure>
-  <div class="sfoot"><span>2 / 3</span><span>Reconstruction GeoSahel <span style="font-variant-numeric:tabular-nums">WA_BIO_ADM1_v4</span> (BioGenerator / ACF, DMP Copernicus / VITO) · données au 7 septembre 2026</span></div>
-</section>
-<section class="slide" id="s3">
-  <p class="kicker">Tchad · Cadre d’action anticipatoire sécheresse · OCHA</p>
-  <h1>Aucune reprise en août, <span class="thin">et aucune province épargnée</span></h1>
-  <div class="tiles">
-    <div class="tile"><div class="k">Trajectoire 2026</div>
-      <div class="v crit">63,1 → 54,6</div>
-      <div class="d">l’anomalie a <strong>baissé</strong> à chaque décade depuis la 21<sup>e</sup></div></div>
-    <div class="tile"><div class="k">À titre de comparaison, 2015</div>
-      <div class="v">51,6 → 68,4</div>
-      <div class="d">partie plus bas, mais <strong>redressée</strong> de 17 points en août</div></div>
-    <div class="tile"><div class="k">Écart à la tendance</div>
-      <div class="v crit">−45,4 %</div>
-      <div class="d">de biomasse manquante sur l’ensemble de la zone</div></div>
-    <div class="tile"><div class="k">Province la plus touchée</div>
-      <div class="v">Kanem</div>
-      <div class="d"><strong>26,2 %</strong> de sa tendance — près de trois quarts en moins</div></div>
-  </div>
-  <div class="figrow">
-    <figure>
-      <h2>Fin de saison : 2026 s’enfonce, 2015 s’était redressée</h2>
-      <svg viewBox="0 0 566 264" role="img" aria-label="Trajectoire de l anomalie des decades 21 a 24, 2026 comparee a 2015"><line class="grid" x1="42" x2="462" y1="232.0" y2="232.0"/><text class="tick" x="35" y="236.0" text-anchor="end" font-size="10.5">40</text><line class="grid" x1="42" x2="462" y1="188.4" y2="188.4"/><text class="tick" x="35" y="192.4" text-anchor="end" font-size="10.5">50</text><line class="grid" x1="42" x2="462" y1="144.8" y2="144.8"/><text class="tick" x="35" y="148.8" text-anchor="end" font-size="10.5">60</text><line class="grid" x1="42" x2="462" y1="101.2" y2="101.2"/><text class="tick" x="35" y="105.2" text-anchor="end" font-size="10.5">70</text><line class="grid" x1="42" x2="462" y1="57.6" y2="57.6"/><text class="tick" x="35" y="61.6" text-anchor="end" font-size="10.5">80</text><line class="grid" x1="42" x2="462" y1="14.0" y2="14.0"/><text class="tick" x="35" y="18.0" text-anchor="end" font-size="10.5">90</text><line class="thresh" x1="42" x2="462" y1="38.0" y2="38.0"/><text class="thresh-label" x="460" y="32.0" text-anchor="end" font-size="10.5">84,5 %</text><text class="tick" x="42.0" y="248.0" text-anchor="middle" font-size="10.5">déc. 21</text><text class="tick" x="182.0" y="248.0" text-anchor="middle" font-size="10.5">déc. 22</text><text class="tick" x="322.0" y="248.0" text-anchor="middle" font-size="10.5">déc. 23</text><text class="tick" x="462.0" y="248.0" text-anchor="middle" font-size="10.5">déc. 24</text><polyline class="tl-past" points="42.0,181.4 182.0,149.2 322.0,122.6 462.0,108.2"/><circle class="tl-past-dot" cx="42.0" cy="181.4" r="3.4"><title>2015 à la décade 21 : 51,6 %</title></circle><circle class="tl-past-dot" cx="182.0" cy="149.2" r="3.4"><title>2015 à la décade 22 : 59,0 %</title></circle><circle class="tl-past-dot" cx="322.0" cy="122.6" r="3.4"><title>2015 à la décade 23 : 65,1 %</title></circle><circle class="tl-past-dot" cx="462.0" cy="108.2" r="3.4"><title>2015 à la décade 24 : 68,4 %</title></circle><text class="tl-past-txt" x="471.0" y="112.2" font-size="12.5">2015 · 68,4</text><polyline class="tl-cur" points="42.0,131.3 182.0,146.5 322.0,153.1 462.0,168.3"/><circle class="tl-cur-dot" cx="42.0" cy="131.3" r="4.2"><title>2026 à la décade 21 : 63,1 %</title></circle><circle class="tl-cur-dot" cx="182.0" cy="146.5" r="4.2"><title>2026 à la décade 22 : 59,6 %</title></circle><circle class="tl-cur-dot" cx="322.0" cy="153.1" r="4.2"><title>2026 à la décade 23 : 58,1 %</title></circle><circle class="tl-cur-dot" cx="462.0" cy="168.3" r="4.2"><title>2026 à la décade 24 : 54,6 %</title></circle><text class="tl-cur-txt" x="471.0" y="172.3" font-size="12.5">2026 · 54,6</text></svg>
-      <div class="legend">
-        <span><i class="sw line"></i> 2026</span>
-        <span><i class="sw line-past"></i> 2015, pire saison antérieure</span>
-      </div>
-      <figcaption>Anomalie cumulée recalculée à chaque décade, du 21 juillet au 31 août.</figcaption>
-    </figure>
-    <figure>
-      <h2>Anomalie 2026 par province, décade 24</h2>
-      <svg viewBox="0 0 566 264" role="img" aria-label="Anomalie 2026 par province a la decade 24"><line class="grid" x1="104.0" x2="104.0" y1="10" y2="234.0"/><text class="tick" x="104.0" y="249.0" text-anchor="middle" font-size="10.5">0</text><line class="grid" x1="205.5" x2="205.5" y1="10" y2="234.0"/><text class="tick" x="205.5" y="249.0" text-anchor="middle" font-size="10.5">25</text><line class="grid" x1="307.0" x2="307.0" y1="10" y2="234.0"/><text class="tick" x="307.0" y="249.0" text-anchor="middle" font-size="10.5">50</text><line class="grid" x1="408.5" x2="408.5" y1="10" y2="234.0"/><text class="tick" x="408.5" y="249.0" text-anchor="middle" font-size="10.5">75</text><line class="grid" x1="510.0" x2="510.0" y1="10" y2="234.0"/><text class="tick" x="510.0" y="249.0" text-anchor="middle" font-size="10.5">100</text><rect class="bar-below" x="104" y="16.1" width="106.4" height="19.8" rx="1.5"><title>Kanem : 26,2 % de la tendance</title></rect><text class="prov-name" x="96" y="30.0" text-anchor="end" font-size="11.5">Kanem</text><text class="val-label" x="216.4" y="30.0" font-size="11.5">26,2</text><rect class="bar-below" x="104" y="48.1" width="160.4" height="19.8" rx="1.5"><title>Wadi Fira : 39,5 % de la tendance</title></rect><text class="prov-name" x="96" y="62.0" text-anchor="end" font-size="11.5">Wadi Fira</text><text class="val-label" x="270.4" y="62.0" font-size="11.5">39,5</text><rect class="bar-below" x="104" y="80.1" width="183.9" height="19.8" rx="1.5"><title>Batha : 45,3 % de la tendance</title></rect><text class="prov-name" x="96" y="94.0" text-anchor="end" font-size="11.5">Batha</text><text class="val-label" x="293.9" y="94.0" font-size="11.5">45,3</text><rect class="bar-below" x="104" y="112.1" width="189.2" height="19.8" rx="1.5"><title>Lac : 46,6 % de la tendance</title></rect><text class="prov-name" x="96" y="126.0" text-anchor="end" font-size="11.5">Lac</text><text class="val-label" x="299.2" y="126.0" font-size="11.5">46,6</text><rect class="bar-below" x="104" y="144.1" width="210.7" height="19.8" rx="1.5"><title>Barh El Gazel : 51,9 % de la tendance</title></rect><text class="prov-name" x="96" y="158.0" text-anchor="end" font-size="11.5">Barh El Gazel</text><text class="val-label" x="320.7" y="158.0" font-size="11.5">51,9</text><rect class="bar-below" x="104" y="176.1" width="244.0" height="19.8" rx="1.5"><title>Ouaddaï : 60,1 % de la tendance</title></rect><text class="prov-name" x="96" y="190.0" text-anchor="end" font-size="11.5">Ouaddaï</text><text class="val-label" x="354.0" y="190.0" font-size="11.5">60,1</text><rect class="bar-below" x="104" y="208.1" width="264.3" height="19.8" rx="1.5"><title>Sila : 65,1 % de la tendance</title></rect><text class="prov-name" x="96" y="222.0" text-anchor="end" font-size="11.5">Sila</text><text class="val-label" x="374.3" y="222.0" font-size="11.5">65,1</text><line class="thresh" x1="447.1" x2="447.1" y1="10" y2="234.0"/><text class="thresh-label" x="452.1" y="19" font-size="10.5">seuil 84,5 %</text></svg>
-      <figcaption>Chaque province est comparée à sa propre tendance 1999–2024. Les sept sont sous
-        le seuil, de 26,2 % à 65,1 %.</figcaption>
-    </figure>
-  </div>
-  <p class="take"><strong>Lecture :</strong> les pluies d’août n’ont pas compensé le déficit.
-    Les deux seules saisons historiquement rétablies en fin de saison (2002, 2013) n’étaient que
-    légèrement sous le seuil ; 2026 en est à 30 points. Ce résultat est cohérent avec les
-    Fenêtres 1 et 2, déjà activées fin avril–début mai sur les prévisions SEAS5.</p>
-  <div class="sfoot"><span>3 / 3</span><span>Reconstruction GeoSahel <span style="font-variant-numeric:tabular-nums">WA_BIO_ADM1_v4</span> (BioGenerator / ACF, DMP Copernicus / VITO) · données au 7 septembre 2026</span></div>
-</section></div>
-<div class="hint">← → ou clic pour naviguer</div>
-<div class="ctrl"><button id="prev" aria-label="Diapositive précédente">‹</button>
-  <span id="num">1 / 3</span>
-  <button id="next" aria-label="Diapositive suivante">›</button></div>
+<main id="main">
+<a class="homelink" href="../">&larr; ds-aa-tcd-drought &middot; rapports</a>
+<div class="gate" id="gate">
+<p class="kicker">Tchad &middot; Cadre d’action anticipatoire sécheresse &middot; OCHA</p>
+<h1>Fenêtre&#160;3 — résultat 2026</h1>
+<p>Ce contenu n’est pas encore public. Saisissez le mot de passe pour l’ouvrir.</p>
+<form id="f" autocomplete="off">
+  <input id="pw" type="password" placeholder="Mot de passe" aria-label="Mot de passe" required>
+  <button id="go" type="submit">Ouvrir</button>
+</form>
+<p class="err" id="err" role="alert"></p>
+<p class="lock">Le contenu est chiffré dans la page et déchiffré dans votre navigateur&#8202;; rien n’est envoyé à un serveur.</p>
+</div>
+
+</main>
 <script>
-(function(){
-  var slides=[].slice.call(document.querySelectorAll('.slide')), i=0;
-  var stage=document.querySelector('.stage');
-  var num=document.getElementById('num'), prev=document.getElementById('prev'), next=document.getElementById('next');
-  function fit(){
-    var s=Math.min(window.innerWidth/1280, window.innerHeight/720)*0.94;
-    stage.style.setProperty('--s', s);
+var ITER=300000;
+function b64(s){var b=atob(s.replace(/\s+/g,"")),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u;}
+async function deriveKey(pw,salt){
+  var km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt:salt,iterations:ITER,hash:'SHA-256'},km,
+    {name:'AES-GCM',length:256},false,['decrypt']);
+}
+var _key=null;
+async function decryptFile(name,pw){
+  var raw=b64(await (await fetch(name,{cache:'force-cache'})).text());
+  var salt=raw.slice(0,16),iv=raw.slice(16,28),ct=raw.slice(28);
+  if(!_key) _key=await deriveKey(pw,salt);
+  return crypto.subtle.decrypt({name:'AES-GCM',iv:iv},_key,ct);
+}
+function wire(onOk){
+  var f=document.getElementById('f'),inp=document.getElementById('pw'),btn=document.getElementById('go'),err=document.getElementById('err');
+  async function attempt(pw,fromStore){
+    btn.disabled=true; err.textContent='';
+    try{ await onOk(pw); sessionStorage.setItem('w3pw',pw); }
+    catch(e){ _key=null; sessionStorage.removeItem('w3pw');
+      if(!fromStore){ err.textContent='Mot de passe incorrect.'; inp.select(); }
+      document.getElementById('gate').hidden=false; }
+    btn.disabled=false;
   }
-  function show(n){
-    i=Math.max(0, Math.min(slides.length-1, n));
-    slides.forEach(function(el,k){ el.classList.toggle('active', k===i); });
-    num.textContent=(i+1)+' / '+slides.length;
-    prev.disabled=(i===0); next.disabled=(i===slides.length-1);
-    if(history.replaceState) history.replaceState(null,'','#'+(i+1));
-  }
-  prev.addEventListener('click', function(e){ e.stopPropagation(); show(i-1); });
-  next.addEventListener('click', function(e){ e.stopPropagation(); show(i+1); });
-  document.addEventListener('keydown', function(e){
-    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' ') { show(i+1); e.preventDefault(); }
-    if(e.key==='ArrowLeft'||e.key==='PageUp') { show(i-1); e.preventDefault(); }
-    if(e.key==='Home') show(0);
-    if(e.key==='End') show(slides.length-1);
-  });
-  stage.addEventListener('click', function(e){
-    if(e.target.closest('.ctrl')) return;
-    show(i + (e.clientX < window.innerWidth*0.28 ? -1 : 1));
-  });
-  window.addEventListener('resize', fit);
-  var h=parseInt((location.hash||'').replace('#',''),10);
-  fit(); show(isNaN(h)?0:h-1);
-})();
+  f.addEventListener('submit',function(e){e.preventDefault(); attempt(inp.value,false);});
+  var st=null; try{ st=sessionStorage.getItem('w3pw'); }catch(e){}
+  if(st){ document.getElementById('gate').hidden=true; attempt(st,true); } else { inp.focus(); }
+}
+
+wire(async function(pw){
+  var html=new TextDecoder().decode(await decryptFile('diapos.enc',pw));
+  document.open(); document.write(html); document.close();
+});
 </script>
 </body>
 </html>
