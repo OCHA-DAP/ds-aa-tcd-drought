@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Climate conditions at evaluation villages, 2026 · Chad AA drought</title>
+<style>
+:root { color-scheme: light;
+  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --baseline:#c3c2b7; --border:rgba(11,11,11,.10); --critical:#d03b3b;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --mid:#f0efec; --avg:#b5b3aa;
+  --dry2:#a32a2a; --dry1:#e9a39b; --wet1:#9ec5f4; --wet2:#1c5cab; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme:dark;
+  --page:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink-2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --baseline:#383835; --border:rgba(255,255,255,.12);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --mid:#383835; --avg:#6b6963;
+  --dry2:#e66767; --dry1:#8a3a3a; --wet1:#1c5cab; --wet2:#86b6ef; } }
+:root[data-theme="dark"] { color-scheme:dark;
+  --page:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink-2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --baseline:#383835; --border:rgba(255,255,255,.12);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --mid:#383835; --avg:#6b6963;
+  --dry2:#e66767; --dry1:#8a3a3a; --wet1:#1c5cab; --wet2:#86b6ef; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--page); color:var(--ink);
+  font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif; }
+main { max-width:1040px; margin:0 auto; padding:14px 16px 64px; }
+.homelink { display:inline-block; font-size:14px; color:var(--ink-2); text-decoration:none;
+  border:1px solid var(--border); border-radius:6px; padding:3px 10px; background:var(--surface); }
+.kicker { font-size:.78rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:26px 0 6px; }
+h1 { font-size:1.6rem; line-height:1.25; margin:0 0 8px; }
+h2 { font-size:1.08rem; margin:0 0 2px; }
+p { color:var(--ink-2); margin:0 0 10px; }
+.sub { font-size:.9rem; color:var(--ink-2); margin:0 0 8px; }
+.tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin:18px 0 8px; }
+.tile { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 16px; }
+.tile .k { font-size:.8rem; color:var(--ink-2); display:flex; align-items:center; gap:7px; }
+.tile .k i { width:10px; height:10px; border-radius:50%; display:inline-block; }
+.tile .v { font-size:1.55rem; font-weight:650; margin-top:2px; }
+.tile .d { font-size:.8rem; color:var(--muted); }
+section { background:var(--surface); border:1px solid var(--border); border-radius:10px;
+  padding:16px 16px 8px; margin:16px 0; }
+.bar { display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin:18px 0 0; position:sticky; top:0;
+  background:var(--page); padding:8px 0; z-index:5; }
+.seg { display:inline-flex; border:1px solid var(--baseline); border-radius:8px; overflow:hidden; }
+.seg button { font:inherit; font-size:.9rem; padding:6px 14px; border:0; background:var(--surface);
+  color:var(--ink-2); cursor:pointer; }
+.seg button[aria-pressed="true"] { background:var(--ink); color:var(--page); font-weight:600; }
+.legend { display:flex; gap:16px; flex-wrap:wrap; font-size:.84rem; color:var(--ink-2); margin:4px 0 0; }
+.legend span { display:inline-flex; align-items:center; gap:6px; }
+.legend i { width:10px; height:10px; border-radius:50%; display:inline-block; border:2px solid var(--ink-2); }
+.legend i.fill { background:var(--ink-2); }
+.plot { width:100%; }
+.btns { display:flex; gap:10px; flex-wrap:wrap; margin:10px 0 12px; }
+.btn { font:inherit; font-size:.9rem; font-weight:600; padding:8px 14px; border-radius:8px; cursor:pointer;
+  border:1.5px solid var(--ink); background:var(--surface); color:var(--ink); text-decoration:none; }
+.tablewrap { overflow-x:auto; max-height:520px; overflow-y:auto; margin-bottom:10px; }
+table { border-collapse:collapse; width:100%; font-size:.84rem; font-variant-numeric:tabular-nums; }
+th, td { text-align:left; padding:5px 10px; border-bottom:1px solid var(--grid); white-space:nowrap; }
+th { position:sticky; top:0; background:var(--surface); color:var(--ink-2); font-weight:600; cursor:pointer; }
+td.n, th.n { text-align:right; }
+details { margin:6px 0 10px; }
+summary { cursor:pointer; color:var(--ink-2); font-size:.9rem; }
+details ul { color:var(--ink-2); font-size:.88rem; padding-left:20px; margin:8px 0; }
+.gate { max-width:440px; margin:18vh auto 0; }
+.gate form { display:flex; gap:10px; margin:18px 0 10px; }
+.gate input { flex:1; font:inherit; padding:10px 12px; border-radius:8px; border:1.5px solid var(--baseline);
+  background:var(--surface); color:var(--ink); }
+.gate button { font:inherit; font-weight:600; padding:10px 18px; border-radius:8px; border:0;
+  background:var(--ink); color:var(--page); cursor:pointer; }
+.gate button:disabled { opacity:.5; cursor:wait; }
+.err { color:var(--critical); font-size:.9rem; min-height:1.3em; margin:0; }
+.lock { font-size:.85rem; color:var(--muted); }
+[hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<main>
+<a class="homelink" href="../">&larr; ds-aa-tcd-drought &middot; reports</a>
+
+<div class="gate" id="gate">
+<p class="kicker">Chad &middot; Anticipatory action drought framework &middot; OCHA</p>
+<h1>Climate conditions at evaluation villages, 2026</h1>
+<p>This page is not public. Enter the password to open it.</p>
+<form id="f" autocomplete="off">
+  <input id="pw" type="password" placeholder="Password" aria-label="Password" required>
+  <button id="go" type="submit">Open</button>
+</form>
+<p class="err" id="err" role="alert"></p>
+<p class="lock">The content is encrypted in the page and decrypted in your browser; nothing is sent to a server.</p>
+</div>
+
+<div id="content" hidden>
+<p class="kicker">Chad &middot; Anticipatory action drought framework &middot; 2026 evaluation</p>
+<h1>Climate conditions at the evaluation villages, 2026</h1>
+<p id="lede"></p>
+<div class="tiles" id="tiles"></div>
+
+<div class="bar">
+  <div class="seg" role="group" aria-label="Indicator">
+    <button id="b-rain" aria-pressed="true">Rainfall</button>
+    <button id="b-ndvi" aria-pressed="false">Vegetation (NDVI)</button>
+  </div>
+  <span class="sub" id="indnote" style="margin:0"></span>
+</div>
+
+<section>
+<h2 id="t-map"></h2>
+<div class="legend"><span><i class="fill"></i>village found on a map</span><span><i></i>placed at the sous-préfecture town</span></div>
+<div id="map" class="plot" style="height:440px"></div>
+</section>
+
+<section>
+<h2 id="t-strip"></h2>
+<p class="sub">One dot per village, grouped by sous-préfecture.</p>
+<div id="strip" class="plot" style="height:560px"></div>
+</section>
+
+<section>
+<h2>Month by month, March to September</h2>
+<p class="sub">Average over the villages in each province. Top: rainfall. Bottom: NDVI. Colour is 2026. Grey is the usual year: the 1991–2020 average for rainfall, the 2001–2023 median and the middle half of years for NDVI.</p>
+<div id="monthly" class="plot" style="height:560px"></div>
+</section>
+
+<section>
+<h2>Rainfall against seasonal greening, village by village</h2>
+<div id="scatter" class="plot" style="height:460px"></div>
+</section>
+
+<section>
+<h2>Data</h2>
+<div class="btns">
+  <button class="btn" id="dl-sum">Download village summary (CSV)</button>
+  <button class="btn" id="dl-long">Download monthly values (CSV)</button>
+</div>
+<details><summary>Show the table</summary>
+<div class="tablewrap"><table id="tbl"></table></div>
+</details>
+<details><summary>Method and limits</summary><ul id="notes"></ul></details>
+</section>
+</div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
+<script>
+var ITER=300000, KEY='tcdevalpw';
+function b64(s){var b=atob(s.replace(/\s+/g,"")),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u;}
+async function decryptFile(name,pw){
+  var raw=b64(await (await fetch(name,{cache:'no-cache'})).text());
+  var salt=raw.slice(0,16),iv=raw.slice(16,28),ct=raw.slice(28);
+  var km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
+  var key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:salt,iterations:ITER,hash:'SHA-256'},km,
+    {name:'AES-GCM',length:256},false,['decrypt']);
+  return crypto.subtle.decrypt({name:'AES-GCM',iv:iv},key,ct);
+}
+(function(){
+  var f=document.getElementById('f'),inp=document.getElementById('pw'),btn=document.getElementById('go'),err=document.getElementById('err');
+  async function attempt(pw,fromStore){
+    btn.disabled=true; err.textContent='';
+    try{
+      var D=JSON.parse(new TextDecoder().decode(await decryptFile('data.enc',pw)));
+      try{sessionStorage.setItem(KEY,pw);}catch(e){}
+      document.getElementById('gate').hidden=true; document.getElementById('content').hidden=false;
+      start(D);
+    }catch(e){
+      try{sessionStorage.removeItem(KEY);}catch(e2){}
+      if(!fromStore) { err.textContent='Wrong password.'; inp.select(); }
+      document.getElementById('gate').hidden=false;
+    }
+    btn.disabled=false;
+  }
+  f.addEventListener('submit',function(e){e.preventDefault(); attempt(inp.value,false);});
+  var st=null; try{st=sessionStorage.getItem(KEY);}catch(e){}
+  if(st) attempt(st,true); else inp.focus();
+})();
+
+function css(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+var D=null, IND='rain';
+var PROV_VARS=['--s1','--s2','--s3'];
+var CFG={displayModeBar:false,responsive:true};
+function narrow(){return window.innerWidth<640;}
+
+function base(){
+  return {paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',
+    font:{family:'system-ui,-apple-system,"Segoe UI",sans-serif',size:12.5,color:css('--ink-2')},
+    margin:{l:56,r:16,t:10,b:44},showlegend:false,
+    hoverlabel:{bgcolor:css('--surface'),bordercolor:css('--baseline'),font:{color:css('--ink'),size:12.5}}};
+}
+function ax(o){return Object.assign({gridcolor:css('--grid'),linecolor:css('--baseline'),zeroline:false,
+  tickfont:{color:css('--muted')},title:{font:{color:css('--ink-2'),size:12.5}}},o||{});}
+function meta(){return D.ind[IND];}
+function val(v){return v[IND+'_pct'];}
+function hov(v){
+  var loc=v.precision==='village'?'village found on a map':'placed at the sous-préfecture town';
+  return '<b>'+esc(v.village)+'</b><br>'+esc(v.adm3)+', '+esc(v.adm1)+
+    '<br>Rainfall Jun–Sep: '+v.rain_mm+' mm, '+v.rain_pct+'% of average, '+v.rain_rank_txt+
+    '<br>Seasonal greening (NDVI): '+v.ndvi_val+', '+v.ndvi_pct+'% of average, '+v.ndvi_rank_txt+
+    '<br><i>'+loc+'</i><extra></extra>';
+}
+function divScale(){
+  return [[0,css('--dry2')],[0.25,css('--dry1')],[0.5,css('--mid')],[0.75,css('--wet1')],[1,css('--wet2')]];
+}
+
+function drawMap(){
+  var m=meta(), g=D.grid[IND];
+  var tr=[{type:'heatmap',x:D.grid.lon,y:D.grid.lat,z:g,zmin:m.zmin,zmax:m.zmax,colorscale:divScale(),
+    hovertemplate:'%{z:.0f}% of average<extra></extra>',
+    colorbar:narrow()?{orientation:'h',y:-0.18,yanchor:'top',thickness:10,len:1,title:{text:'% of average',side:'bottom',font:{color:css('--ink-2')}},
+      tickfont:{color:css('--muted')},outlinewidth:0}:{title:{text:'% of average',side:'right',font:{color:css('--ink-2')}},thickness:12,len:.8,
+      tickfont:{color:css('--muted')},outlinewidth:0}}];
+  D.borders.forEach(function(b){tr.push({type:'scatter',mode:'lines',x:b.x,y:b.y,hoverinfo:'skip',
+    line:{color:css('--ink'),width:b.w}});});
+  [['village','circle'],['seat','circle-open']].forEach(function(p){
+    var vs=D.villages.filter(function(v){return (v.precision==='village')===(p[0]==='village');});
+    tr.push({type:'scatter',mode:'markers',x:vs.map(function(v){return v.lon_j;}),y:vs.map(function(v){return v.lat_j;}),
+      marker:{symbol:p[1],size:8,color:css('--ink'),line:{color:p[0]==='village'?css('--surface'):css('--ink'),width:p[0]==='village'?1.2:1.6}},
+      hovertemplate:vs.map(hov)});
+  });
+  if(!narrow()) tr.push({type:'scatter',mode:'text',x:D.towns.map(function(t){return t.lon;}),y:D.towns.map(function(t){return t.lat;}),
+    text:D.towns.map(function(t){return t.name;}),textposition:D.towns.map(function(t){return t.pos;}),hoverinfo:'skip',
+    textfont:{size:11.5,color:css('--ink')}});
+  var L=base(); L.margin={l:44,r:8,t:8,b:36};
+  document.getElementById('map').style.height=narrow()?'330px':'440px';
+  L.xaxis=ax({range:D.grid.xr,showgrid:false,ticksuffix:'°E',constrain:'domain'});
+  L.yaxis=ax({range:D.grid.yr,showgrid:false,ticksuffix:'°N',scaleanchor:'x',scaleratio:1.03,constrain:'domain'});
+  Plotly.react('map',tr,L,CFG);
+}
+
+function drawStrip(){
+  var m=meta(), cats=D.adm3_order.slice().reverse();
+  var tr=[];
+  D.provinces.forEach(function(p,i){
+    [['village','circle'],['seat','circle-open']].forEach(function(s){
+      var vs=D.villages.filter(function(v){return v.adm1===p && (v.precision==='village')===(s[0]==='village');});
+      tr.push({type:'scatter',mode:'markers',x:vs.map(val),
+        y:vs.map(function(v){return cats.indexOf(v.adm3_label)+v.jit;}),
+        marker:{symbol:s[1],size:9,color:css(PROV_VARS[i]),line:{color:s[0]==='village'?css('--surface'):css(PROV_VARS[i]),width:s[0]==='village'?1:1.8}},
+        hovertemplate:vs.map(hov)});
+    });
+  });
+  var L=base(); L.margin=narrow()?{l:112,r:14,t:24,b:46}:{l:150,r:120,t:24,b:46};
+  L.xaxis=ax({title:{text:narrow()?'% of average':m.axis},range:[m.strip_min,m.strip_max],ticksuffix:'%'});
+  L.yaxis=ax({tickmode:'array',tickvals:cats.map(function(c,i){return i;}),ticktext:cats,showgrid:false,
+    range:[-0.6,cats.length-0.4],tickfont:{color:css('--ink-2')}});
+  L.shapes=[{type:'line',x0:100,x1:100,y0:-0.6,y1:cats.length-0.4,line:{color:css('--baseline'),width:1.5}}];
+  L.annotations=[{x:100,y:cats.length-0.4,text:'average',showarrow:false,yanchor:'bottom',font:{color:css('--muted'),size:11.5}}];
+  if(narrow()) L.xaxis.dtick=20;
+  D.provinces.forEach(function(p,i){
+    if(narrow()) return;
+    var rows=cats.map(function(c,k){return D.adm3_prov[c]===p?k:-1;}).filter(function(k){return k>=0;});
+    L.annotations.push({xref:'paper',x:1.025,xanchor:'left',y:(Math.max.apply(null,rows)+Math.min.apply(null,rows))/2,text:'<b>'+esc(p)+'</b>',
+      showarrow:false,font:{color:css('--ink'),size:12}});
+    L.shapes.push({type:'rect',xref:'paper',x0:1.005,x1:1.015,y0:Math.min.apply(null,rows)-0.4,y1:Math.max.apply(null,rows)+0.4,
+      fillcolor:css(PROV_VARS[i]),line:{width:0}});
+  });
+  Plotly.react('strip',tr,L,CFG);
+}
+
+function drawMonthly(){
+  var tr=[], L=base(), n=D.provinces.length;
+  var nw=narrow(); document.getElementById('monthly').style.height=nw?'1250px':'560px';
+  L.margin={l:56,r:12,t:28,b:36}; L.grid=nw?{rows:2*n,columns:1,pattern:'independent',ygap:.32}:{rows:2,columns:n,pattern:'independent',xgap:.06,ygap:.16};
+  L.barmode='group'; L.bargap=.25; L.bargroupgap=.08; L.annotations=[];
+  D.provinces.forEach(function(p,i){
+    var mo=D.monthly[p], a=nw?2*i+1:i+1, b=nw?2*i+2:n+i+1, col=css(PROV_VARS[i]);
+    tr.push({type:'bar',x:D.month_names,y:mo.rain_avg,name:'average',marker:{color:css('--avg')},xaxis:'x'+a,yaxis:'y'+a,
+      hovertemplate:'%{x} average: %{y:.0f} mm<extra></extra>'});
+    tr.push({type:'bar',x:D.month_names,y:mo.rain_2026,name:'2026',marker:{color:col},xaxis:'x'+a,yaxis:'y'+a,
+      hovertemplate:'%{x} 2026: %{y:.0f} mm<extra></extra>'});
+    tr.push({type:'scatter',mode:'lines',x:mo.ndvi_x,y:mo.ndvi_hi,line:{width:0},hoverinfo:'skip',xaxis:'x'+b,yaxis:'y'+b});
+    tr.push({type:'scatter',mode:'lines',x:mo.ndvi_x,y:mo.ndvi_lo,line:{width:0},fill:'tonexty',fillcolor:css('--grid'),
+      hoverinfo:'skip',xaxis:'x'+b,yaxis:'y'+b});
+    tr.push({type:'scatter',mode:'lines',x:mo.ndvi_x,y:mo.ndvi_med,line:{color:css('--avg'),width:2},xaxis:'x'+b,yaxis:'y'+b,
+      hovertemplate:'%{x|%-d %b} usual: %{y:.2f}<extra></extra>'});
+    tr.push({type:'scatter',mode:'lines',x:mo.ndvi_x,y:mo.ndvi_2026,line:{color:col,width:2.5},xaxis:'x'+b,yaxis:'y'+b,
+      hovertemplate:'%{x|%-d %b} 2026: %{y:.2f}<extra></extra>'});
+    L['xaxis'+a]=ax({showgrid:false}); L['yaxis'+a]=ax({range:[0,D.monthly_rain_max],title:{text:(i===0||nw)?'mm per month':''}});
+    L['xaxis'+b]=ax({showgrid:false,tickformat:'%b',dtick:'M1',range:['2026-03-01','2026-09-30']});
+    L['yaxis'+b]=ax({range:D.monthly_ndvi_range,title:{text:(i===0||nw)?'NDVI':''}});
+    L.annotations.push({xref:'x'+a+' domain',yref:'y'+a+' domain',x:0,y:1.12,xanchor:'left',showarrow:false,
+      text:'<b>'+esc(p)+'</b>',font:{color:css('--ink'),size:12.5}});
+  });
+  Plotly.react('monthly',tr,L,CFG);
+}
+
+function drawScatter(){
+  var tr=[];
+  D.provinces.forEach(function(p,i){
+    [['village','circle'],['seat','circle-open']].forEach(function(s){
+      var vs=D.villages.filter(function(v){return v.adm1===p && (v.precision==='village')===(s[0]==='village');});
+      tr.push({type:'scatter',mode:'markers',name:p,showlegend:s[0]==='village',x:vs.map(function(v){return v.rain_pct;}),
+        y:vs.map(function(v){return v.ndvi_pct;}),
+        marker:{symbol:s[1],size:9,color:css(PROV_VARS[i]),line:{color:s[0]==='village'?css('--surface'):css(PROV_VARS[i]),width:s[0]==='village'?1:1.8}},
+        hovertemplate:vs.map(hov)});
+    });
+  });
+  var L=base(); L.margin={l:60,r:16,t:30,b:48}; L.showlegend=true;
+  L.legend={orientation:'h',x:0,y:1.08,font:{color:css('--ink-2')}};
+  L.xaxis=ax({title:{text:narrow()?'Rainfall Jun–Sep, % of average':'Rainfall June–September 2026, % of average'},ticksuffix:'%'});
+  L.yaxis=ax({title:{text:narrow()?'Greening, % of average':'Seasonal greening (NDVI) 2026, % of average'},ticksuffix:'%'});
+  Plotly.react('scatter',tr,L,CFG);
+}
+
+function drawAll(){
+  var m=meta();
+  document.getElementById('t-map').textContent=m.map_title;
+  document.getElementById('t-strip').textContent=m.strip_title;
+  document.getElementById('indnote').textContent=m.note;
+  drawMap(); drawStrip();
+}
+function csvDownload(name,text){
+  var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['\ufeff'+text],{type:'text/csv;charset=utf-8'}));
+  a.download=name; document.body.appendChild(a); a.click(); a.remove();
+}
+function buildTable(){
+  var cols=D.table_cols, t=document.getElementById('tbl'), sortK=null, asc=true;
+  function render(){
+    var rows=D.villages.slice();
+    if(sortK) rows.sort(function(a,b){var x=a[sortK],y=b[sortK];return (x<y?-1:x>y?1:0)*(asc?1:-1);});
+    t.innerHTML='<thead><tr>'+cols.map(function(c){return '<th class="'+(c.n?'n':'')+'" data-k="'+c.k+'">'+esc(c.t)+'</th>';}).join('')+
+      '</tr></thead><tbody>'+rows.map(function(r){return '<tr>'+cols.map(function(c){
+        return '<td class="'+(c.n?'n':'')+'">'+esc(r[c.k])+'</td>';}).join('')+'</tr>';}).join('')+'</tbody>';
+    t.querySelectorAll('th').forEach(function(th){th.onclick=function(){
+      var k=th.getAttribute('data-k'); if(sortK===k) asc=!asc; else {sortK=k; asc=true;} render();};});
+  }
+  render();
+}
+function start(d){
+  D=d;
+  document.getElementById('lede').textContent=D.lede;
+  document.getElementById('tiles').innerHTML=D.tiles.map(function(t,i){
+    return '<div class="tile"><div class="k"><i style="background:var('+PROV_VARS[i]+')"></i>'+esc(t.k)+'</div><div class="v">'+esc(t.v)+
+      '</div><div class="d">'+esc(t.d)+'</div></div>';}).join('');
+  document.getElementById('notes').innerHTML=D.notes.map(function(n){return '<li>'+esc(n)+'</li>';}).join('');
+  ['rain','ndvi'].forEach(function(k){
+    document.getElementById('b-'+k).onclick=function(){
+      IND=k; ['rain','ndvi'].forEach(function(j){document.getElementById('b-'+j).setAttribute('aria-pressed',String(j===k));});
+      drawAll();
+    };
+  });
+  document.getElementById('dl-sum').onclick=function(){csvDownload('tcd_evaluation_villages_climate_2026_summary.csv',D.csv_summary);};
+  document.getElementById('dl-long').onclick=function(){csvDownload('tcd_evaluation_villages_climate_2026_monthly.csv',D.csv_long);};
+  buildTable(); drawAll(); drawMonthly(); drawScatter();
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){drawAll(); drawMonthly(); drawScatter();});
+  var wasNarrow=narrow(); window.addEventListener('resize',function(){ if(narrow()!==wasNarrow){ wasNarrow=narrow(); ['map','strip','monthly','scatter'].forEach(function(id){Plotly.purge(id);}); drawAll(); drawMonthly(); drawScatter(); } });
+}
+</script>
+</body>
+</html>
