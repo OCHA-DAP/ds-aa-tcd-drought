@@ -3,7 +3,8 @@
 
     PAGE_PASSWORD=... python 03_build_page.py <work_dir> <repo_docs_dir>
 reads  <work_dir>/villages/located.csv, seats.csv, <work_dir>/out/{chirps,ndvi}.nc,
-       <work_dir>/gaz/tcd.shp.zip
+       <work_dir>/gaz/tcd.shp.zip, <work_dir>/bio/bio_adm2_by_year.csv
+       (departement biomass by year, from 04_biomass_from_hnrp.py)
 writes <repo_docs_dir>/evaluation_villages_2026/{index.html,data.enc}
 
 Everything village-level goes into data.enc (PBKDF2-SHA256, 300k iterations,
@@ -33,6 +34,10 @@ RAIN_BASE, NDVI_BASE = (1991, 2020), (
     2001,
     2023,
 )  # the archive lacks an August 2024 composite and all of the 2025 rainy season
+# rainfall trend-fit period: the year being assessed is never in the fit.
+# (Biomass arrives already detrended on 1999-2024. NDVI greening is not detrended:
+# over 2001-2023 its slope is indistinguishable from zero at nearly every village.)
+RAIN_FIT = (1981, 2025)
 MONTH_NAMES = ["Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep"]
 
 
@@ -74,24 +79,57 @@ def at_points(da):
     return xr.where(is_seat, area.sel(**sel), da.sel(**sel))
 
 
-# ---- rainfall: June-September total against 1991-2020
+def trend_factor(da, y0, y1):
+    """Straight-line trend over y0..y1 of the 7 x 7-cell area mean, for every year
+    of the record, as a share of that area's y0..y1 mean (floored at 0.1, as the
+    framework does for biomass). The area mean keeps single-cell noise out of the
+    slope, so neighbouring villages get nearly the same trend."""
+    sm = da.rolling(lat=7, lon=7, center=True, min_periods=1).mean()
+    d = sm.sel(year=slice(y0, y1))
+    c = d.polyfit("year", 1, skipna=True).polyfit_coefficients
+    line = c.sel(degree=1, drop=True) * da.year + c.sel(degree=0, drop=True)
+    return (line / d.mean("year")).clip(min=0.1)
+
+
+def pct_of_trend(vals, mean_fit, factor):
+    """100 x value / (own mean over the fit period x trend factor of that year)."""
+    return 100 * vals / (mean_fit * factor)
+
+
+# ---- rainfall: June-September total against 1991-2020 and against its trend
 jjas_g = chirps.sel(month=[6, 7, 8, 9]).sum("month", skipna=False)
-rain_pct_g = (
-    100
-    * jjas_g.sel(year=YEAR)
-    / jjas_g.sel(year=slice(*RAIN_BASE)).mean("year")
+rain_f = trend_factor(jjas_g, *RAIN_FIT)
+rain_trend_g = pct_of_trend(
+    jjas_g.sel(year=YEAR),
+    jjas_g.sel(year=slice(*RAIN_FIT)).mean("year"),
+    rain_f.sel(year=YEAR),
 )
 jjas = at_points(jjas_g)
 base = jjas.sel(year=slice(*RAIN_BASE))
 p["rain_mm"] = jjas.sel(year=YEAR).values.round(0).astype(int)
 p["rain_avg_mm"] = base.mean("year").values.round(0).astype(int)
-p["rain_pct"] = (
+p["rain_rawpct"] = (
     (100 * jjas.sel(year=YEAR) / base.mean("year")).values.round(0).astype(int)
 )
+rain_ratio = pct_of_trend(
+    jjas, jjas.sel(year=slice(*RAIN_FIT)).mean("year"), rain_f.sel(**sel)
+)
+p["rain_pct"] = rain_ratio.sel(year=YEAR).values.round(0).astype(int)
+p["rain_trend"] = (
+    100
+    * (
+        rain_f.sel(**sel).sel(year=YEAR)
+        - rain_f.sel(**sel).sel(year=YEAR - 10)
+    )
+).values.round(
+    1
+)  # trend, % of the mean per decade
 p["rain_z"] = (
     (jjas.sel(year=YEAR) - base.mean("year")) / base.std("year", ddof=1)
 ).values.round(2)
-p["rain_rank"] = (jjas < jjas.sel(year=YEAR)).sum("year").values + 1
+p["rain_rank"] = (rain_ratio < rain_ratio.sel(year=YEAR)).sum(
+    "year"
+).values + 1
 N_RAIN = jjas.sizes["year"]
 p["rain_rank_txt"] = [rank_txt(r, N_RAIN, "driest") for r in p.rain_rank]
 
@@ -156,6 +194,42 @@ assert p[["rain_pct", "ndvi_pct"]].notnull().all().all(), p[
 ]
 p["ndvi_pct"] = p.ndvi_pct.astype(int)
 
+# ---- biomass: GeoSahel, by departement only. Cumulative production 1 April - 20 August
+# as % of the level its 1999-2024 trend gives for the year (the framework's Window 3
+# construct), read from the table behind the HNRP 2027 page.
+bio = pd.read_csv(WORK / "bio" / "bio_adm2_by_year.csv")
+adm2 = gpd.read_file(f"zip://{WORK}/gaz/tcd.shp.zip!tcd_adm2.shp").to_crs(4326)
+adm2["pcode"] = adm2.ADM2_PCODE.str.replace("TCD", "TD", regex=False)
+b26 = bio[bio.year == YEAR].set_index("pcode")
+bio["rank"] = bio.groupby("pcode").bio_pct_trend.rank(method="min")
+brank = bio[bio.year == YEAR].set_index("pcode")["rank"]
+N_BIO = bio.year.nunique()
+pts = gpd.GeoDataFrame(
+    p[["row_id"]], geometry=gpd.points_from_xy(p.lon, p.lat), crs=4326
+)
+j2 = gpd.sjoin(pts, adm2[["pcode", "ADM2_FR", "geometry"]], how="left")
+assert j2.pcode.notnull().all() and len(j2) == len(p)
+assert (j2.row_id.values == p.row_id.values).all()
+assert j2.pcode.isin(b26.index).all(), j2[~j2.pcode.isin(b26.index)]
+# the list's own departement where it names one of the official units; elsewhere in
+# Kanem the list uses newer units than the biomass data, so the approximate location decides
+LIST_DEP = {
+    "Bahr-El-Gazel Ouest": "TD1903",
+    "Bahr-El-Gazel Sud": "TD1901",
+    "Batha Ouest": "TD0101",
+    "Kanem": "TD0601",
+    "Kanem Nord": "TD0602",
+    "Wadi-Bissam": "TD0603",
+}
+p["bio_pcode"] = p.adm2.map(LIST_DEP).fillna(
+    pd.Series(j2.pcode.values, index=p.index)
+)
+p["bio_dep"] = p.bio_pcode.map(adm2.set_index("pcode").ADM2_FR)
+p["bio_pct"] = p.bio_pcode.map(b26.bio_pct_trend).round(0).astype(int)
+p["bio_rawpct"] = p.bio_pcode.map(b26.bio_pct_mean).round(0).astype(int)
+p["bio_rank"] = p.bio_pcode.map(brank).astype(int)
+p["bio_rank_txt"] = [rank_txt(r, N_BIO, "lowest") for r in p.bio_rank]
+
 # ---- ordering, labels, jitter
 prov_order = p.groupby("adm1").rain_pct.median().sort_values().index.tolist()
 p["adm3_label"] = p.adm3
@@ -166,9 +240,11 @@ p["jit"] = 0.0
 for _, gidx in p.groupby("adm3_label").groups.items():
     n = len(gidx)
     p.loc[gidx, "jit"] = np.linspace(-0.3, 0.3, n) if n > 1 else 0.0
-# spread markers that share a map coordinate on a small ring
+# villages found by name that share a map coordinate: spread on a small ring.
+# villages placed at a sous-prefecture town are drawn as one numbered marker per town.
 p["lon_j"], p["lat_j"] = p.lon, p.lat
-for _, gidx in p.groupby([p.lon.round(4), p.lat.round(4)]).groups.items():
+pv = p[p.precision == "village"]
+for _, gidx in pv.groupby([pv.lon.round(4), pv.lat.round(4)]).groups.items():
     n = len(gidx)
     if n > 1:
         r = 0.018 + 0.004 * n
@@ -243,15 +319,56 @@ towns = (
     .drop_duplicates("name")
     .copy()
 )
-n_here = p.groupby([p.lon.round(4), p.lat.round(4)]).size()
+ps = p[p.precision == "seat"]
+seat_xy = {(round(x, 4), round(y, 4)) for x, y in zip(ps.lon, ps.lat)}
+on_seat = [
+    pr == "village" and (round(x, 4), round(y, 4)) in seat_xy
+    for pr, x, y in zip(p.precision, p.lon, p.lat)
+]
+p.loc[on_seat, "lon_j"] = p.loc[on_seat, "lon"] - 0.02
+p.loc[on_seat, "lat_j"] = p.loc[on_seat, "lat"] - 0.02
+stacks = []
+for (lo, la), d in ps.groupby([ps.lon.round(4), ps.lat.round(4)]):
+    for c in ("rain_pct", "ndvi_pct", "bio_pct", "rain_mm", "bio_dep"):
+        assert d[c].nunique() == 1, (c, d[[c, "adm3"]])
+    names = d.village.tolist()
+    r0 = d.iloc[0]
+    stacks.append(
+        dict(
+            lon=float(lo),
+            lat=float(la),
+            n=len(d),
+            town=r0.adm3.replace(" Rural", ""),
+            adm1=r0.adm1,
+            names=[
+                ", ".join(names[k : k + 4]) for k in range(0, len(names), 4)
+            ],
+            rain_mm=int(r0.rain_mm),
+            rain_pct=int(r0.rain_pct),
+            rain_rank_txt=r0.rain_rank_txt,
+            ndvi_pct=int(r0.ndvi_pct),
+            ndvi_rank_txt=r0.ndvi_rank_txt,
+            bio_pct=int(r0.bio_pct),
+            bio_dep=r0.bio_dep,
+        )
+    )
+# the count goes left of the marker when village dots sit just to its right
+for st in stacks:
+    crowd = (
+        (p.precision == "village")
+        & (p.lon_j - st["lon"]).between(0.03, 0.2)
+        & ((p.lat_j - st["lat"]).abs() < 0.06)
+    ).any()
+    st["pos"] = "middle left" if crowd else "middle right"
+has_stack = {(round(s["lon"], 4), round(s["lat"], 4)) for s in stacks}
 ring = [
-    0.018 + 0.004 * n_here.get((round(x, 4), round(y, 4)), 0)
+    0.035 if (round(x, 4), round(y, 4)) in has_stack else 0.018
     for x, y in zip(towns.lon, towns.lat)
 ]
 # label below the town when another town sits just to the north, otherwise above
 below = [
     any(
-        (0 < o.lat - t.lat < 0.25) and abs(o.lon - t.lon) < 0.5
+        (0 < o.lat - t.lat < 0.25) and abs(o.lon - t.lon) < 0.3
         for o in towns.itertuples()
     )
     for t in towns.itertuples()
@@ -267,6 +384,36 @@ def grid_list(da):
     ]
 
 
+# biomass: departement value painted onto the grid, and one row per departement
+cells = gpd.GeoDataFrame(
+    geometry=gpd.points_from_xy(
+        *[a.ravel() for a in np.meshgrid(chirps.lon.values, chirps.lat.values)]
+    ),
+    crs=4326,
+)
+cj = gpd.sjoin(cells, adm2[["pcode", "geometry"]], how="left")
+cj = cj[~cj.index.duplicated()]
+bio_g = xr.DataArray(
+    cj.pcode.map(b26.bio_pct_trend)
+    .to_numpy(dtype=float)
+    .reshape(chirps.sizes["lat"], chirps.sizes["lon"]),
+    coords=dict(lat=chirps.lat, lon=chirps.lon),
+    dims=("lat", "lon"),
+)
+bio_deps = (
+    p.groupby(["adm1", "bio_pcode", "bio_dep"])
+    .agg(
+        n=("row_id", "size"),
+        bio_pct=("bio_pct", "first"),
+        bio_rawpct=("bio_rawpct", "first"),
+        bio_rank_txt=("bio_rank_txt", "first"),
+    )
+    .reset_index()
+)
+bio_deps["po"] = bio_deps.adm1.map(prov_order.index)
+bio_deps = bio_deps.sort_values(["po", "bio_pct"]).drop(columns="po")
+
+
 # ---- text
 def rng(s):
     return (
@@ -280,24 +427,42 @@ tiles = []
 for prov in prov_order:
     d = p[p.adm1 == prov]
     r0, r1 = d.rain_rank.min(), d.rain_rank.max()
-    rk = ordinal(r0) if r0 == r1 else f"{ordinal(r0)} to {ordinal(r1)}"
+    o = lambda r: "" if r == 1 else ordinal(r) + " "
+    rk = (o(r0) if r0 == r1 else f"{o(r0)}driest to {ordinal(r1)} ").strip()
+    rk = rk + " " if rk and not rk.endswith(" ") else rk
     tiles.append(
         dict(
             k=f"{prov} · {len(d)} villages",
             v=rng(d.rain_pct),
-            d=f"of average June–September rainfall; {rk} driest of {N_RAIN} years",
+            d=f"of the June–September rainfall expected from the trend; {rk}driest of {N_RAIN} years",
         )
     )
 n_v, n_s = int((p.precision == "village").sum()), int(
     (p.precision == "seat").sum()
 )
 lede = (
-    f"{len(p)} villages in {len(prov_order)} provinces. Rainfall and vegetation greenness in 2026, "
-    "compared with each place's own average."
+    f"{len(p)} villages in {len(prov_order)} provinces. Rainfall, vegetation greenness and biomass in 2026. "
+    "Rainfall and biomass are compared with the level each place's own long-term trend gives for 2026, "
+    "vegetation greenness with its average."
 )
 notes = [
     "Rainfall is CHIRPS v3 monthly (satellite and rain gauges, about 5 km grid), 1981–2026. "
-    "The June–September total is compared with the 1991–2020 average at the same grid cell.",
+    "The June–September total is taken at the village's grid cell, or around the town for villages placed there.",
+    "Rainfall and biomass are corrected for their trend. Both have been rising in this part of Chad, so a plain "
+    "average understates what a normal year now looks like. Each value is divided by the level a straight trend "
+    "line gives for 2026: fitted on 1981–2025 for rainfall and 1999–2024 for biomass. 2026 is never part of the "
+    "fit. For rainfall the line is fitted on the area about 35 km across around each grid cell, so that "
+    "neighbouring villages share nearly the same trend. Ranks compare 2026 with every other year after the same "
+    f"correction. The correction lowers the rainfall figures by {int((p.rain_rawpct - p.rain_pct).min())} to "
+    f"{int((p.rain_rawpct - p.rain_pct).max())} points. The downloads give both versions.",
+    "NDVI greening is not corrected for trend. Over 2001–2023 its trend at these villages is too weak to tell "
+    "from zero and changes sign from place to place, so a correction would add noise. It stays a percentage of "
+    "the 2001–2023 average.",
+    "Biomass is the GeoSahel / Action contre la Faim dry-matter production, summed from 1 April to 20 August and "
+    "corrected for trend as in the HNRP 2027 drought index. The data used here is by département, so all "
+    "villages in a département share one value. A village takes the département named in the list. Where the "
+    "list uses a newer unit in Kanem, it takes the département its approximate location falls in. Near "
+    "département borders the value can therefore differ from the map colour under the marker.",
     "NDVI is MODIS Terra MOD13Q1 (250 m, 16-day), 2000–2026, cloud-screened and averaged to the same 5 km grid. "
     "Seasonal greening is the August–September mean minus the March–May mean of the same year, which removes the "
     "bare-soil background. It is compared with the 2001–2023 average at the same grid cell, using the same "
@@ -318,24 +483,43 @@ notes = [
 ]
 ind = dict(
     rain=dict(
-        map_title="June–September 2026 rainfall, % of the 1991–2020 average",
-        strip_title="June–September 2026 rainfall at each village, % of the 1991–2020 average",
-        axis="% of average June–September rainfall",
-        zmin=40,
-        zmax=160,
-        strip_min=35.0,
+        map_title="June–September 2026 rainfall, % of the level expected from the trend",
+        strip_title="June–September 2026 rainfall at each village, % of the level expected from the trend",
+        strip_sub="One dot per village, grouped by sous-préfecture.",
+        axis="% of expected June–September rainfall",
+        unit="% of expected",
+        ref="expected",
+        zmin=20,
+        zmax=180,
+        strip_min=float(min(35, p.rain_pct.min() - 5)),
         strip_max=float(max(105, p.rain_pct.max() + 5)),
         note="CHIRPS v3, about 5 km grid",
     ),
     ndvi=dict(
         map_title="2026 seasonal greening (NDVI), % of the 2001–2023 average",
         strip_title="2026 seasonal greening (NDVI) at each village, % of the 2001–2023 average",
+        strip_sub="One dot per village, grouped by sous-préfecture.",
         axis="% of average seasonal greening",
+        unit="% of average",
+        ref="average",
         zmin=0,
         zmax=200,
         strip_min=float(min(0, p.ndvi_pct.min() - 5)),
         strip_max=float(max(105, p.ndvi_pct.max() + 5)),
         note="MODIS NDVI rise from the dry season to August–September, averaged to the same 5 km grid",
+    ),
+    bio=dict(
+        map_title="2026 biomass by département, % of the level expected from the trend",
+        strip_title="2026 biomass in the départements of the evaluation villages, % of the level expected from the trend",
+        strip_sub="One dot per département. Biomass is only published by département.",
+        axis="% of expected biomass, 1 April to 20 August",
+        unit="% of expected",
+        ref="expected",
+        zmin=0,
+        zmax=200,
+        strip_min=0.0,
+        strip_max=float(max(105, bio_deps.bio_pct.max() + 5)),
+        note="GeoSahel dry-matter production, 1 April to 20 August, by département",
     ),
 )
 
@@ -354,9 +538,11 @@ summary_cols = [
     "score",
     "rain_mm",
     "rain_avg_mm",
-    "rain_pct",
+    "rain_rawpct",
     "rain_z",
+    "rain_pct",
     "rain_rank",
+    "rain_trend",
     "ndvi_peak",
     "ndvi_val",
     "ndvi_avg",
@@ -364,6 +550,10 @@ summary_cols = [
     "ndvi_z",
     "ndvi_rank",
     "ndvi_n",
+    "bio_dep",
+    "bio_rawpct",
+    "bio_pct",
+    "bio_rank",
 ]
 summ = p[summary_cols].rename(
     columns=dict(
@@ -376,16 +566,22 @@ summ = p[summary_cols].rename(
         score="match_score",
         rain_mm="rain_jjas_2026_mm",
         rain_avg_mm="rain_jjas_avg_1991_2020_mm",
-        rain_pct="rain_jjas_pct_of_avg",
-        rain_z="rain_jjas_zscore",
-        rain_rank=f"rain_jjas_rank_driest_of_{N_RAIN}",
+        rain_rawpct="rain_jjas_pct_of_avg_1991_2020",
+        rain_z="rain_jjas_zscore_1991_2020",
+        rain_pct="rain_jjas_pct_of_trend",
+        rain_rank=f"rain_jjas_detrended_rank_driest_of_{N_RAIN}",
+        rain_trend="rain_trend_pct_of_mean_per_decade",
         ndvi_peak="ndvi_augsep_2026",
         ndvi_val="ndvi_greening_2026",
         ndvi_avg="ndvi_greening_avg_2001_2023",
-        ndvi_pct="ndvi_greening_pct_of_avg",
-        ndvi_z="ndvi_greening_zscore",
+        ndvi_pct="ndvi_greening_pct_of_avg_2001_2023",
+        ndvi_z="ndvi_greening_zscore_2001_2023",
         ndvi_rank="ndvi_greening_rank_lowest",
         ndvi_n="ndvi_years_in_rank",
+        bio_dep="biomass_departement",
+        bio_rawpct="biomass_pct_of_avg_1999_2024",
+        bio_pct="biomass_pct_of_trend",
+        bio_rank=f"biomass_detrended_rank_lowest_of_{N_BIO}",
     )
 )
 summ[["lon", "lat"]] = summ[["lon", "lat"]].round(4)
@@ -437,12 +633,16 @@ vill = p[
         "jit",
         "rain_mm",
         "rain_pct",
+        "rain_rawpct",
         "rain_rank",
         "rain_rank_txt",
         "ndvi_val",
         "ndvi_pct",
         "ndvi_rank",
         "ndvi_rank_txt",
+        "bio_dep",
+        "bio_pct",
+        "bio_rank_txt",
     ]
 ].copy()
 vill[["lon_j", "lat_j", "jit"]] = vill[["lon_j", "lat_j", "jit"]].round(4)
@@ -461,12 +661,15 @@ D = dict(
     grid=dict(
         lon=[round(float(v), 3) for v in chirps.lon.values],
         lat=[round(float(v), 3) for v in chirps.lat.values[::-1]],
-        rain=grid_list(rain_pct_g),
+        rain=grid_list(rain_trend_g),
         ndvi=grid_list(ndvi_pct_g),
+        bio=grid_list(bio_g),
         xr=xr_,
         yr=yr_,
     ),
     borders=borders,
+    stacks=stacks,
+    bio_deps=json.loads(bio_deps.to_json(orient="records")),
     towns=json.loads(
         towns[["name", "lon", "lat", "pos"]].round(3).to_json(orient="records")
     ),
@@ -483,11 +686,12 @@ D = dict(
         dict(k="village", t="Village"),
         dict(k="loc_txt", t="Location"),
         dict(k="rain_mm", t="Rain Jun–Sep (mm)", n=1),
-        dict(k="rain_pct", t="% of average", n=1),
+        dict(k="rain_pct", t="% of expected", n=1),
         dict(k="rain_rank", t=f"Rank, driest of {N_RAIN}", n=1),
         dict(k="ndvi_val", t="NDVI greening", n=1),
         dict(k="ndvi_pct", t="% of average", n=1),
         dict(k="ndvi_rank", t="Rank, lowest", n=1),
+        dict(k="bio_pct", t="Biomass (département), % of expected", n=1),
     ],
     csv_summary=summ.to_csv(index=False),
     csv_long=long.to_csv(index=False),
@@ -509,9 +713,19 @@ long.to_csv(WORK / "out" / "monthly.csv", index=False)
 (WORK / "out" / "data.json").write_text(json.dumps(D, ensure_ascii=False))
 print(pd.DataFrame(tiles).to_string())
 print(
-    p.groupby("adm1")[["rain_pct", "ndvi_pct", "ndvi_z", "ndvi_rank"]]
+    p.groupby("adm1")[
+        [
+            "rain_rawpct",
+            "rain_pct",
+            "rain_rank",
+            "ndvi_pct",
+            "ndvi_rank",
+            "bio_pct",
+        ]
+    ]
     .describe()
     .T.round(1)
     .to_string()
 )
 print("payload kB", len(ct) // 1024)
+print(bio_deps.to_string())

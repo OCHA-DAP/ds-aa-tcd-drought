@@ -100,30 +100,32 @@ details ul { color:var(--ink-2); font-size:.88rem; padding-left:20px; margin:8px
   <div class="seg" role="group" aria-label="Indicator">
     <button id="b-rain" aria-pressed="true">Rainfall</button>
     <button id="b-ndvi" aria-pressed="false">Vegetation (NDVI)</button>
+    <button id="b-bio" aria-pressed="false">Biomass</button>
   </div>
   <span class="sub" id="indnote" style="margin:0"></span>
 </div>
 
 <section>
 <h2 id="t-map"></h2>
-<div class="legend"><span><i class="fill"></i>village found on a map</span><span><i></i>placed at the sous-préfecture town</span></div>
+<div class="legend"><span><i class="fill"></i>village found on a map</span><span><i></i>placed at the sous-préfecture town; the number is how many villages</span></div>
 <div id="map" class="plot" style="height:440px"></div>
 </section>
 
 <section>
 <h2 id="t-strip"></h2>
-<p class="sub">One dot per village, grouped by sous-préfecture.</p>
+<p class="sub" id="s-strip"></p>
 <div id="strip" class="plot" style="height:560px"></div>
 </section>
 
 <section>
 <h2>Month by month, March to September</h2>
-<p class="sub">Average over the villages in each province. Top: rainfall. Bottom: NDVI. Colour is 2026. Grey is the usual year: the 1991–2020 average for rainfall, the 2001–2023 median and the middle half of years for NDVI.</p>
+<p class="sub">Average over the villages in each province. Top: rainfall. Bottom: NDVI. Colour is 2026. Grey is the usual year: the 1991–2020 average for rainfall, the 2001–2023 median and the middle half of years for NDVI. These are the measured values, with no trend correction.</p>
 <div id="monthly" class="plot" style="height:560px"></div>
 </section>
 
 <section>
 <h2>Rainfall against seasonal greening, village by village</h2>
+<p class="sub">Rainfall as % of the level expected from the trend. Greening as % of the 2001–2023 average.</p>
 <div id="scatter" class="plot" style="height:460px"></div>
 </section>
 
@@ -194,9 +196,17 @@ function val(v){return v[IND+'_pct'];}
 function hov(v){
   var loc=v.precision==='village'?'village found on a map':'placed at the sous-préfecture town';
   return '<b>'+esc(v.village)+'</b><br>'+esc(v.adm3)+', '+esc(v.adm1)+
-    '<br>Rainfall Jun–Sep: '+v.rain_mm+' mm, '+v.rain_pct+'% of average, '+v.rain_rank_txt+
-    '<br>Seasonal greening (NDVI): '+v.ndvi_val+', '+v.ndvi_pct+'% of average, '+v.ndvi_rank_txt+
+    '<br>Rainfall Jun–Sep: '+v.rain_mm+' mm, '+v.rain_pct+'% of expected, '+v.rain_rank_txt+
+    '<br>Seasonal greening (NDVI): '+v.ndvi_pct+'% of average, '+v.ndvi_rank_txt+
+    '<br>Biomass ('+esc(v.bio_dep)+' département): '+v.bio_pct+'% of expected'+
     '<br><i>'+loc+'</i><extra></extra>';
+}
+function hovStack(s){
+  return '<b>'+s.n+(s.n>1?' villages':' village')+' placed at '+esc(s.town)+'</b><br>'+esc(s.adm1)+
+    '<br>Rainfall Jun–Sep: '+s.rain_mm+' mm, '+s.rain_pct+'% of expected, '+s.rain_rank_txt+
+    '<br>Seasonal greening (NDVI): '+s.ndvi_pct+'% of average, '+s.ndvi_rank_txt+
+    '<br>Biomass ('+esc(s.bio_dep)+' département): '+s.bio_pct+'% of expected'+
+    '<br><i>'+s.names.map(esc).join(',<br>')+'</i><extra></extra>';
 }
 function divScale(){
   return [[0,css('--dry2')],[0.25,css('--dry1')],[0.5,css('--mid')],[0.75,css('--wet1')],[1,css('--wet2')]];
@@ -205,18 +215,21 @@ function divScale(){
 function drawMap(){
   var m=meta(), g=D.grid[IND];
   var tr=[{type:'heatmap',x:D.grid.lon,y:D.grid.lat,z:g,zmin:m.zmin,zmax:m.zmax,colorscale:divScale(),
-    hovertemplate:'%{z:.0f}% of average<extra></extra>',
-    colorbar:narrow()?{orientation:'h',y:-0.18,yanchor:'top',thickness:10,len:1,title:{text:'% of average',side:'bottom',font:{color:css('--ink-2')}},
-      tickfont:{color:css('--muted')},outlinewidth:0}:{title:{text:'% of average',side:'right',font:{color:css('--ink-2')}},thickness:12,len:.8,
+    hovertemplate:'%{z:.0f}'+m.unit+'<extra></extra>',
+    colorbar:narrow()?{orientation:'h',y:-0.18,yanchor:'top',thickness:10,len:1,title:{text:m.unit,side:'bottom',font:{color:css('--ink-2')}},
+      tickfont:{color:css('--muted')},outlinewidth:0}:{title:{text:m.unit,side:'right',font:{color:css('--ink-2')}},thickness:12,len:.8,
       tickfont:{color:css('--muted')},outlinewidth:0}}];
   D.borders.forEach(function(b){tr.push({type:'scatter',mode:'lines',x:b.x,y:b.y,hoverinfo:'skip',
     line:{color:css('--ink'),width:b.w}});});
-  [['village','circle'],['seat','circle-open']].forEach(function(p){
-    var vs=D.villages.filter(function(v){return (v.precision==='village')===(p[0]==='village');});
-    tr.push({type:'scatter',mode:'markers',x:vs.map(function(v){return v.lon_j;}),y:vs.map(function(v){return v.lat_j;}),
-      marker:{symbol:p[1],size:8,color:css('--ink'),line:{color:p[0]==='village'?css('--surface'):css('--ink'),width:p[0]==='village'?1.2:1.6}},
-      hovertemplate:vs.map(hov)});
-  });
+  tr.push({type:'scatter',mode:'markers+text',x:D.stacks.map(function(s){return s.lon;}),y:D.stacks.map(function(s){return s.lat;}),
+    text:D.stacks.map(function(s){return '<b>'+s.n+'</b>';}),textposition:D.stacks.map(function(s){return s.pos;}),
+    textfont:{size:narrow()?10.5:12,color:css('--ink')},
+    marker:{symbol:'circle-open',size:narrow()?12:15,color:css('--ink'),line:{color:css('--ink'),width:1.8}},
+    hovertemplate:D.stacks.map(hovStack)});
+  var vs=D.villages.filter(function(v){return v.precision==='village';});
+  tr.push({type:'scatter',mode:'markers',x:vs.map(function(v){return v.lon_j;}),y:vs.map(function(v){return v.lat_j;}),
+    marker:{symbol:'circle',size:narrow()?6:8,color:css('--ink'),line:{color:css('--surface'),width:1.2}},
+    hovertemplate:vs.map(hov)});
   if(!narrow()) tr.push({type:'scatter',mode:'text',x:D.towns.map(function(t){return t.lon;}),y:D.towns.map(function(t){return t.lat;}),
     text:D.towns.map(function(t){return t.name;}),textposition:D.towns.map(function(t){return t.pos;}),hoverinfo:'skip',
     textfont:{size:11.5,color:css('--ink')}});
@@ -227,7 +240,35 @@ function drawMap(){
   Plotly.react('map',tr,L,CFG);
 }
 
+function drawStripBio(){
+  var m=meta(), deps=D.bio_deps.slice().reverse(), tr=[];
+  D.provinces.forEach(function(p,i){
+    var ds=deps.filter(function(d){return d.adm1===p;});
+    tr.push({type:'scatter',mode:'markers',x:ds.map(function(d){return d.bio_pct;}),y:ds.map(function(d){return deps.indexOf(d);}),
+      marker:{symbol:'circle',size:13,color:css(PROV_VARS[i]),line:{color:css('--surface'),width:1}},
+      hovertemplate:ds.map(function(d){return '<b>'+esc(d.bio_dep)+'</b><br>'+esc(d.adm1)+'<br>'+d.n+' of the villages'+
+        '<br>Biomass: '+d.bio_pct+'% of expected, '+d.bio_rank_txt+'<br>'+d.bio_rawpct+'% of the 1999–2024 average<extra></extra>';})});
+  });
+  var L=base(); L.margin=narrow()?{l:168,r:14,t:24,b:46}:{l:170,r:120,t:24,b:46};
+  document.getElementById('strip').style.height='300px';
+  L.xaxis=ax({title:{text:narrow()?'% of expected':m.axis},range:[m.strip_min,m.strip_max],ticksuffix:'%'});
+  L.yaxis=ax({tickmode:'array',tickvals:deps.map(function(d,i){return i;}),
+    ticktext:deps.map(function(d){return esc(d.bio_dep)+' ('+d.n+')';}),showgrid:false,range:[-0.6,deps.length-0.4],tickfont:{color:css('--ink-2')}});
+  L.shapes=[{type:'line',x0:100,x1:100,y0:-0.6,y1:deps.length-0.4,line:{color:css('--baseline'),width:1.5}}];
+  L.annotations=[{x:100,y:deps.length-0.4,text:'expected',showarrow:false,yanchor:'bottom',font:{color:css('--muted'),size:11.5}}];
+  D.provinces.forEach(function(p,i){
+    if(narrow()) return;
+    var rows=deps.map(function(d,k){return d.adm1===p?k:-1;}).filter(function(k){return k>=0;});
+    L.annotations.push({xref:'paper',x:1.025,xanchor:'left',y:(Math.max.apply(null,rows)+Math.min.apply(null,rows))/2,text:'<b>'+esc(p)+'</b>',
+      showarrow:false,font:{color:css('--ink'),size:12}});
+    L.shapes.push({type:'rect',xref:'paper',x0:1.005,x1:1.015,y0:Math.min.apply(null,rows)-0.4,y1:Math.max.apply(null,rows)+0.4,
+      fillcolor:css(PROV_VARS[i]),line:{width:0}});
+  });
+  Plotly.react('strip',tr,L,CFG);
+}
 function drawStrip(){
+  if(IND==='bio') return drawStripBio();
+  document.getElementById('strip').style.height='560px';
   var m=meta(), cats=D.adm3_order.slice().reverse();
   var tr=[];
   D.provinces.forEach(function(p,i){
@@ -240,11 +281,11 @@ function drawStrip(){
     });
   });
   var L=base(); L.margin=narrow()?{l:112,r:14,t:24,b:46}:{l:150,r:120,t:24,b:46};
-  L.xaxis=ax({title:{text:narrow()?'% of average':m.axis},range:[m.strip_min,m.strip_max],ticksuffix:'%'});
+  L.xaxis=ax({title:{text:narrow()?m.unit:m.axis},range:[m.strip_min,m.strip_max],ticksuffix:'%'});
   L.yaxis=ax({tickmode:'array',tickvals:cats.map(function(c,i){return i;}),ticktext:cats,showgrid:false,
     range:[-0.6,cats.length-0.4],tickfont:{color:css('--ink-2')}});
   L.shapes=[{type:'line',x0:100,x1:100,y0:-0.6,y1:cats.length-0.4,line:{color:css('--baseline'),width:1.5}}];
-  L.annotations=[{x:100,y:cats.length-0.4,text:'average',showarrow:false,yanchor:'bottom',font:{color:css('--muted'),size:11.5}}];
+  L.annotations=[{x:100,y:cats.length-0.4,text:m.ref,showarrow:false,yanchor:'bottom',font:{color:css('--muted'),size:11.5}}];
   if(narrow()) L.xaxis.dtick=20;
   D.provinces.forEach(function(p,i){
     if(narrow()) return;
@@ -297,7 +338,7 @@ function drawScatter(){
   });
   var L=base(); L.margin={l:60,r:16,t:30,b:48}; L.showlegend=true;
   L.legend={orientation:'h',x:0,y:1.08,font:{color:css('--ink-2')}};
-  L.xaxis=ax({title:{text:narrow()?'Rainfall Jun–Sep, % of average':'Rainfall June–September 2026, % of average'},ticksuffix:'%'});
+  L.xaxis=ax({title:{text:narrow()?'Rainfall Jun–Sep, % of expected':'Rainfall June–September 2026, % of expected'},ticksuffix:'%'});
   L.yaxis=ax({title:{text:narrow()?'Greening, % of average':'Seasonal greening (NDVI) 2026, % of average'},ticksuffix:'%'});
   Plotly.react('scatter',tr,L,CFG);
 }
@@ -307,6 +348,7 @@ function drawAll(){
   document.getElementById('t-map').textContent=m.map_title;
   document.getElementById('t-strip').textContent=m.strip_title;
   document.getElementById('indnote').textContent=m.note;
+  document.getElementById('s-strip').textContent=m.strip_sub;
   drawMap(); drawStrip();
 }
 function csvDownload(name,text){
@@ -333,9 +375,10 @@ function start(d){
     return '<div class="tile"><div class="k"><i style="background:var('+PROV_VARS[i]+')"></i>'+esc(t.k)+'</div><div class="v">'+esc(t.v)+
       '</div><div class="d">'+esc(t.d)+'</div></div>';}).join('');
   document.getElementById('notes').innerHTML=D.notes.map(function(n){return '<li>'+esc(n)+'</li>';}).join('');
-  ['rain','ndvi'].forEach(function(k){
+  ['rain','ndvi','bio'].forEach(function(k){
     document.getElementById('b-'+k).onclick=function(){
-      IND=k; ['rain','ndvi'].forEach(function(j){document.getElementById('b-'+j).setAttribute('aria-pressed',String(j===k));});
+      var was=IND; IND=k; if((was==='bio')!==(k==='bio')) Plotly.purge('strip');
+      ['rain','ndvi','bio'].forEach(function(j){document.getElementById('b-'+j).setAttribute('aria-pressed',String(j===k));});
       drawAll();
     };
   });
