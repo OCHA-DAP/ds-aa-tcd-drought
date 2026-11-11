@@ -459,7 +459,8 @@ notes = [
     "from zero and changes sign from place to place, so a correction would add noise. It stays a percentage of "
     "the 2001–2023 average.",
     "Biomass is the GeoSahel / Action contre la Faim dry-matter production, summed from 1 April to 20 August and "
-    "corrected for trend as in the HNRP 2027 drought index. The data used here is by département, so all "
+    "corrected for trend as in the HNRP 2027 drought index. The figures are those extracted on 4 September 2026 "
+    "and may since have been revised at source. The data used here is by département, so all "
     "villages in a département share one value. A village takes the département named in the list. Where the "
     "list uses a newer unit in Kanem, it takes the département its approximate location falls in. Near "
     "département borders the value can therefore differ from the map colour under the marker.",
