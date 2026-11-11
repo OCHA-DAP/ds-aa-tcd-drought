@@ -95,6 +95,10 @@ details ul { color:var(--ink-2); font-size:.88rem; padding-left:20px; margin:8px
 <h1>Climate conditions at the evaluation villages, 2026</h1>
 <p id="lede"></p>
 <div class="tiles" id="tiles"></div>
+<div class="btns" style="margin:14px 0 0">
+  <button class="btn" data-dl="sum">Download village data (CSV)</button>
+  <button class="btn" data-dl="long">Download monthly values (CSV)</button>
+</div>
 
 <div class="bar">
   <div class="seg" role="group" aria-label="Indicator">
@@ -132,8 +136,8 @@ details ul { color:var(--ink-2); font-size:.88rem; padding-left:20px; margin:8px
 <section>
 <h2>Data</h2>
 <div class="btns">
-  <button class="btn" id="dl-sum">Download village summary (CSV)</button>
-  <button class="btn" id="dl-long">Download monthly values (CSV)</button>
+  <button class="btn" id="dl-sum" data-dl="sum">Download village data (CSV)</button>
+  <button class="btn" id="dl-long" data-dl="long">Download monthly values (CSV)</button>
 </div>
 <details><summary>Show the table</summary>
 <div class="tablewrap"><table id="tbl"></table></div>
@@ -382,8 +386,9 @@ function start(d){
       drawAll();
     };
   });
-  document.getElementById('dl-sum').onclick=function(){csvDownload('tcd_evaluation_villages_climate_2026_summary.csv',D.csv_summary);};
-  document.getElementById('dl-long').onclick=function(){csvDownload('tcd_evaluation_villages_climate_2026_monthly.csv',D.csv_long);};
+  document.querySelectorAll('[data-dl]').forEach(function(b){b.onclick=function(){
+    if(b.getAttribute('data-dl')==='sum') csvDownload('tcd_evaluation_villages_climate_2026_summary.csv',D.csv_summary);
+    else csvDownload('tcd_evaluation_villages_climate_2026_monthly.csv',D.csv_long);};});
   buildTable(); drawAll(); drawMonthly(); drawScatter();
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){drawAll(); drawMonthly(); drawScatter();});
   var wasNarrow=narrow(); window.addEventListener('resize',function(){ if(narrow()!==wasNarrow){ wasNarrow=narrow(); ['map','strip','monthly','scatter'].forEach(function(id){Plotly.purge(id);}); drawAll(); drawMonthly(); drawScatter(); } });
