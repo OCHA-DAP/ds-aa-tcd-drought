@@ -34,10 +34,13 @@ RAIN_BASE, NDVI_BASE = (1991, 2020), (
     2001,
     2023,
 )  # the archive lacks an August 2024 composite and all of the 2025 rainy season
-# rainfall trend-fit period: the year being assessed is never in the fit.
-# (Biomass arrives already detrended on 1999-2024. NDVI greening is not detrended:
-# over 2001-2023 its slope is indistinguishable from zero at nearly every village.)
-RAIN_FIT = (1981, 2025)
+# trend-fit periods: the year being assessed is never in the fit. Rainfall is fitted
+# on the 35 km area mean; NDVI greening by departement, because at 35 km its slope is
+# lost in noise. Biomass arrives already detrended on 1999-2024.
+RAIN_FIT, NDVI_FIT = (1981, 2025), NDVI_BASE
+MIN_DEP_CELLS = (
+    50  # fewer vegetated grid cells than this: use the whole-grid trend
+)
 MONTH_NAMES = ["Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep"]
 
 
@@ -170,29 +173,17 @@ def window_mean(lo, hi):
 raw_peak_y = window_mean(209, 258)
 peak_y = raw_peak_y - window_mean(60, 150)
 nbase_g = peak_y.sel(year=slice(*NDVI_BASE))
-ndvi_pct_g = (
-    (100 * peak_y.sel(year=YEAR) / nbase_g.mean("year"))
-    .where(nbase_g.mean("year") >= 0.02)
-    .clip(0, 300)
-)
 pk = at_points(peak_y)
 nb = pk.sel(year=slice(*NDVI_BASE))
 p["ndvi_peak"] = at_points(raw_peak_y).sel(year=YEAR).values.round(3)
 p["ndvi_val"] = pk.sel(year=YEAR).values.round(3)
 p["ndvi_avg"] = nb.mean("year").values.round(3)
-p["ndvi_pct"] = (100 * pk.sel(year=YEAR) / nb.mean("year")).values.round(0)
+p["ndvi_rawpct"] = (100 * pk.sel(year=YEAR) / nb.mean("year")).values.round(0)
 p["ndvi_z"] = (
     (pk.sel(year=YEAR) - nb.mean("year")) / nb.std("year", ddof=1)
 ).values.round(2)
-p["ndvi_rank"] = (pk < pk.sel(year=YEAR)).sum("year").values + 1
-p["ndvi_n"] = pk.notnull().sum("year").values
-p["ndvi_rank_txt"] = [
-    rank_txt(r, n, "lowest") for r, n in zip(p.ndvi_rank, p.ndvi_n)
-]
-assert p[["rain_pct", "ndvi_pct"]].notnull().all().all(), p[
-    p.ndvi_pct.isnull()
-]
-p["ndvi_pct"] = p.ndvi_pct.astype(int)
+assert p.ndvi_rawpct.notnull().all(), p[p.ndvi_rawpct.isnull()]
+p["ndvi_rawpct"] = p.ndvi_rawpct.astype(int)
 
 # ---- biomass: GeoSahel, by departement only. Cumulative production 1 April - 20 August
 # as % of the level its 1999-2024 trend gives for the year (the framework's Window 3
@@ -229,6 +220,93 @@ p["bio_pct"] = p.bio_pcode.map(b26.bio_pct_trend).round(0).astype(int)
 p["bio_rawpct"] = p.bio_pcode.map(b26.bio_pct_mean).round(0).astype(int)
 p["bio_rank"] = p.bio_pcode.map(brank).astype(int)
 p["bio_rank_txt"] = [rank_txt(r, N_BIO, "lowest") for r in p.bio_rank]
+
+# ---- NDVI greening against its trend, fitted by departement
+# Each grid cell is first divided by its own 2001-2023 mean, so the departement average
+# is not dominated by its greenest cells and does not shift when cloudy cells drop out.
+cells = gpd.GeoDataFrame(
+    geometry=gpd.points_from_xy(
+        *[a.ravel() for a in np.meshgrid(chirps.lon.values, chirps.lat.values)]
+    ),
+    crs=4326,
+)
+cj = gpd.sjoin(cells, adm2[["pcode", "geometry"]], how="left")
+cj = cj[~cj.index.duplicated()]
+assert (cj.index.values == np.arange(len(cells))).all()
+dep_code, dep_names = pd.factorize(cj.pcode)  # -1 where outside Chad
+dep_g = xr.DataArray(
+    dep_code.reshape(chirps.sizes["lat"], chirps.sizes["lon"]),
+    coords=dict(lat=chirps.lat, lon=chirps.lon),
+    dims=("lat", "lon"),
+).reindex_like(peak_y.isel(year=0, drop=True), method="nearest")
+nmean_g = nbase_g.mean("year")
+veg = nmean_g >= 0.02
+norm_g = (peak_y / nmean_g).where(veg)
+nd_years = peak_y.year.values
+
+
+def greening_trend(mask):
+    """Trend line (as a factor of the fit-period mean, floored at 0.1) of the mean
+    normalised greening over the cells in mask. A year enters the fit only if at
+    least 30% of the vegetated cells have a value. Returns (factor per year, number
+    of vegetated cells, slope in % of the mean per decade, t value of the slope).
+    """
+    sub = norm_g.where(mask)
+    n_cells = int((veg & mask).sum())
+    ser = sub.mean(("lat", "lon")).where(
+        sub.notnull().sum(("lat", "lon")) >= 0.3 * max(n_cells, 1)
+    )
+    ser = ser.sel(year=slice(*NDVI_FIT)).to_series().dropna()
+    if n_cells < MIN_DEP_CELLS or len(ser) < 15:
+        return None, n_cells, np.nan, np.nan
+    x = ser.index.values.astype(float)
+    b, a = np.polyfit(x, ser.values, 1)
+    res = ser.values - (b * x + a)
+    se = np.sqrt((res**2).sum() / (len(x) - 2) / ((x - x.mean()) ** 2).sum())
+    fac = np.clip((b * nd_years + a) / ser.mean(), 0.1, None)
+    return fac, n_cells, 1000 * b / ser.mean(), b / se
+
+
+whole_f = greening_trend(xr.ones_like(veg))[0]
+assert whole_f is not None
+fac_tab = np.tile(whole_f, (len(dep_names) + 1, 1))  # row 0: outside Chad
+dep_trend = {}
+for k, pc_ in enumerate(dep_names):
+    fac, n_cells, slope_dec, t_val = greening_trend(dep_g == k)
+    if fac is not None:
+        fac_tab[k + 1] = fac
+        dep_trend[pc_] = dict(cells=n_cells, slope=slope_dec, t=t_val)
+ndvi_f_g = xr.DataArray(
+    fac_tab[dep_g.values + 1],
+    coords=dict(lat=dep_g.lat, lon=dep_g.lon, year=nd_years),
+    dims=("lat", "lon", "year"),
+)
+ndvi_trend_g = (
+    (100 * peak_y.sel(year=YEAR) / (nmean_g * ndvi_f_g.sel(year=YEAR)))
+    .where(veg)
+    .clip(0, 300)
+)
+# villages take the trend of the departement used for biomass (see LIST_DEP)
+assert p.bio_pcode.isin(dep_trend).all(), set(p.bio_pcode) - set(dep_trend)
+ndvi_f_p = xr.DataArray(
+    fac_tab[[list(dep_names).index(c) + 1 for c in p.bio_pcode]],
+    coords=dict(year=nd_years),
+    dims=("p", "year"),
+)
+ndvi_ratio = 100 * pk / (nb.mean("year") * ndvi_f_p)
+p["ndvi_pct"] = ndvi_ratio.sel(year=YEAR).values.round(0)
+p["ndvi_trend"] = p.bio_pcode.map(lambda c: dep_trend[c]["slope"]).round(1)
+p["ndvi_rank"] = (ndvi_ratio < ndvi_ratio.sel(year=YEAR)).sum(
+    "year"
+).values + 1
+p["ndvi_n"] = ndvi_ratio.notnull().sum("year").values
+p["ndvi_rank_txt"] = [
+    rank_txt(r, n, "lowest") for r, n in zip(p.ndvi_rank, p.ndvi_n)
+]
+assert p[["rain_pct", "ndvi_pct"]].notnull().all().all(), p[
+    p.ndvi_pct.isnull()
+]
+p["ndvi_pct"] = p.ndvi_pct.astype(int)
 
 # ---- ordering, labels, jitter
 prov_order = p.groupby("adm1").rain_pct.median().sort_values().index.tolist()
@@ -385,14 +463,6 @@ def grid_list(da):
 
 
 # biomass: departement value painted onto the grid, and one row per departement
-cells = gpd.GeoDataFrame(
-    geometry=gpd.points_from_xy(
-        *[a.ravel() for a in np.meshgrid(chirps.lon.values, chirps.lat.values)]
-    ),
-    crs=4326,
-)
-cj = gpd.sjoin(cells, adm2[["pcode", "geometry"]], how="left")
-cj = cj[~cj.index.duplicated()]
 bio_g = xr.DataArray(
     cj.pcode.map(b26.bio_pct_trend)
     .to_numpy(dtype=float)
@@ -441,33 +511,38 @@ n_v, n_s = int((p.precision == "village").sum()), int(
     (p.precision == "seat").sum()
 )
 lede = (
-    f"{len(p)} villages in {len(prov_order)} provinces. Rainfall, vegetation greenness and biomass in 2026. "
-    "Rainfall and biomass are compared with the level each place's own long-term trend gives for 2026, "
-    "vegetation greenness with its average."
+    f"{len(p)} villages in {len(prov_order)} provinces. Rainfall, vegetation greenness and biomass in 2026, "
+    "compared with the level each place's own long-term trend gives for 2026."
 )
 notes = [
     "Rainfall is CHIRPS v3 monthly (satellite and rain gauges, about 5 km grid), 1981–2026. "
     "The June–September total is taken at the village's grid cell, or around the town for villages placed there.",
-    "Rainfall and biomass are corrected for their trend. Both have been rising in this part of Chad, so a plain "
-    "average understates what a normal year now looks like. Each value is divided by the level a straight trend "
-    "line gives for 2026: fitted on 1981–2025 for rainfall and 1999–2024 for biomass. 2026 is never part of the "
-    "fit. For rainfall the line is fitted on the area about 35 km across around each grid cell, so that "
-    "neighbouring villages share nearly the same trend. Ranks compare 2026 with every other year after the same "
-    f"correction. The correction lowers the rainfall figures by {int((p.rain_rawpct - p.rain_pct).min())} to "
-    f"{int((p.rain_rawpct - p.rain_pct).max())} points. The downloads give both versions.",
-    "NDVI greening is not corrected for trend. Over 2001–2023 its trend at these villages is too weak to tell "
-    "from zero and changes sign from place to place, so a correction would add noise. It stays a percentage of "
-    "the 2001–2023 average.",
-    "Biomass is the GeoSahel / Action contre la Faim dry-matter production, summed from 1 April to 20 August and "
+    "All three indicators are corrected for their trend. Rainfall and vegetation have been rising in most of "
+    "this part of Chad, so a plain average understates what a normal year now looks like. Each value is divided "
+    "by the level a straight trend line gives for 2026: fitted on 1981–2025 for rainfall, 2001–2023 for NDVI "
+    "greening and 1999–2024 for biomass. 2026 is never part of the fit. Ranks compare 2026 with every other "
+    "year after the same correction. The downloads give both versions.",
+    "The rainfall trend is fitted on the area about 35 km across around each grid cell, so that neighbouring "
+    f"villages share nearly the same trend. It lowers the rainfall figures by {int((p.rain_rawpct - p.rain_pct).min())} to "
+    f"{int((p.rain_rawpct - p.rain_pct).max())} points.",
+    "The NDVI trend is fitted by département, the same unit as biomass. It is strong in Nord Kanem, moderate "
+    "in Kanem and Batha Ouest, and close to zero in Barh El Gazel Sud, Barh El Gazel Ouest and Wadi Bissam. "
+    "Only the Nord Kanem trend stands clearly above the year-to-year noise, so elsewhere the size of the "
+    "correction is uncertain. Because the trend changes at département borders, the map can show a step "
+    "there. Places outside Chad use the trend of the whole map. The correction moves the "
+    f"greening figures by between {int((p.ndvi_rawpct - p.ndvi_pct).max())} points down and "
+    f"{int((p.ndvi_pct - p.ndvi_rawpct).max())} points up.",
+    "Biomass is shown only because it is part of the framework's trigger (Window 3). "
+    "It is the GeoSahel / Action contre la Faim dry-matter production, summed from 1 April to 20 August and "
     "corrected for trend as in the HNRP 2027 drought index. The figures are those extracted on 4 September 2026 "
     "and may since have been revised at source. The data used here is by département, so all "
     "villages in a département share one value. A village takes the département named in the list. Where the "
-    "list uses a newer unit in Kanem, it takes the département its approximate location falls in. Near "
-    "département borders the value can therefore differ from the map colour under the marker.",
+    "list uses a newer unit in Kanem, it takes the département its approximate location falls in. The NDVI "
+    "trend uses the same département. Near département borders a village's value can therefore differ from "
+    "the map colour under the marker.",
     "NDVI is MODIS Terra MOD13Q1 (250 m, 16-day), 2000–2026, cloud-screened and averaged to the same 5 km grid. "
     "Seasonal greening is the August–September mean minus the March–May mean of the same year, which removes the "
-    "bare-soil background. It is compared with the 2001–2023 average at the same grid cell, using the same "
-    "cloud-free dates in every year. 2024 and 2025 are left out because rainy-season images are missing from "
+    "bare-soil background. It uses the same cloud-free dates in every year. 2024 and 2025 are left out because rainy-season images are missing from "
     "the archive used.",
     "Where vegetation is very sparse, as in northern Kanem, the greening percentages are ratios of small numbers. "
     "The rank is the safer measure there.",
@@ -497,12 +572,12 @@ ind = dict(
         note="CHIRPS v3, about 5 km grid",
     ),
     ndvi=dict(
-        map_title="2026 seasonal greening (NDVI), % of the 2001–2023 average",
-        strip_title="2026 seasonal greening (NDVI) at each village, % of the 2001–2023 average",
+        map_title="2026 seasonal greening (NDVI), % of the level expected from the trend",
+        strip_title="2026 seasonal greening (NDVI) at each village, % of the level expected from the trend",
         strip_sub="One dot per village, grouped by sous-préfecture.",
-        axis="% of average seasonal greening",
-        unit="% of average",
-        ref="average",
+        axis="% of expected seasonal greening",
+        unit="% of expected",
+        ref="expected",
         zmin=0,
         zmax=200,
         strip_min=float(min(0, p.ndvi_pct.min() - 5)),
@@ -512,7 +587,7 @@ ind = dict(
     bio=dict(
         map_title="2026 biomass by département, % of the level expected from the trend",
         strip_title="2026 biomass in the départements of the evaluation villages, % of the level expected from the trend",
-        strip_sub="One dot per département. Biomass is only published by département.",
+        strip_sub="One dot per département. Biomass is shown only because it is part of the framework's trigger.",
         axis="% of expected biomass, 1 April to 20 August",
         unit="% of expected",
         ref="expected",
@@ -520,7 +595,7 @@ ind = dict(
         zmax=200,
         strip_min=0.0,
         strip_max=float(max(105, bio_deps.bio_pct.max() + 5)),
-        note="GeoSahel dry-matter production, 1 April to 20 August, by département",
+        note="Shown only because it is part of the trigger. GeoSahel dry-matter production, 1 April to 20 August, by département",
     ),
 )
 
@@ -547,10 +622,12 @@ summary_cols = [
     "ndvi_peak",
     "ndvi_val",
     "ndvi_avg",
-    "ndvi_pct",
+    "ndvi_rawpct",
     "ndvi_z",
+    "ndvi_pct",
     "ndvi_rank",
     "ndvi_n",
+    "ndvi_trend",
     "bio_dep",
     "bio_rawpct",
     "bio_pct",
@@ -575,10 +652,12 @@ summ = p[summary_cols].rename(
         ndvi_peak="ndvi_augsep_2026",
         ndvi_val="ndvi_greening_2026",
         ndvi_avg="ndvi_greening_avg_2001_2023",
-        ndvi_pct="ndvi_greening_pct_of_avg_2001_2023",
+        ndvi_rawpct="ndvi_greening_pct_of_avg_2001_2023",
         ndvi_z="ndvi_greening_zscore_2001_2023",
-        ndvi_rank="ndvi_greening_rank_lowest",
+        ndvi_pct="ndvi_greening_pct_of_trend",
+        ndvi_rank="ndvi_greening_detrended_rank_lowest",
         ndvi_n="ndvi_years_in_rank",
+        ndvi_trend="ndvi_departement_trend_pct_of_mean_per_decade",
         bio_dep="biomass_departement",
         bio_rawpct="biomass_pct_of_avg_1999_2024",
         bio_pct="biomass_pct_of_trend",
@@ -663,7 +742,7 @@ D = dict(
         lon=[round(float(v), 3) for v in chirps.lon.values],
         lat=[round(float(v), 3) for v in chirps.lat.values[::-1]],
         rain=grid_list(rain_trend_g),
-        ndvi=grid_list(ndvi_pct_g),
+        ndvi=grid_list(ndvi_trend_g),
         bio=grid_list(bio_g),
         xr=xr_,
         yr=yr_,
@@ -690,7 +769,7 @@ D = dict(
         dict(k="rain_pct", t="% of expected", n=1),
         dict(k="rain_rank", t=f"Rank, driest of {N_RAIN}", n=1),
         dict(k="ndvi_val", t="NDVI greening", n=1),
-        dict(k="ndvi_pct", t="% of average", n=1),
+        dict(k="ndvi_pct", t="% of expected", n=1),
         dict(k="ndvi_rank", t="Rank, lowest", n=1),
         dict(k="bio_pct", t="Biomass (département), % of expected", n=1),
     ],
@@ -719,6 +798,7 @@ print(
             "rain_rawpct",
             "rain_pct",
             "rain_rank",
+            "ndvi_rawpct",
             "ndvi_pct",
             "ndvi_rank",
             "bio_pct",
